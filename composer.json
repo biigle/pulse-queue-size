@@ -1,0 +1,18 @@
+{
+    "name": "pulse-card/pulse-queue-size-card",
+    "description": "A Laravel pulse queue size card",
+    "require": {
+        "laravel/pulse": "^1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "PulseCard\\PulseQueueSizeCard\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Leane Schlundt",
+            "email": "lhecht@techfak.de"
+        }
+    ]
+}
