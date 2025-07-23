@@ -12,10 +12,11 @@
             <x-pulse::thead>
                 <tr>
                     <x-pulse::th>Queue</x-pulse::th>
-                    <x-pulse::th>Size</x-pulse::th>
+                    <x-pulse::th>Jobs</x-pulse::th>
                 </tr>
             </x-pulse::thead>
             <tbody>
+            <div>
                 @foreach ($queues as $queue)
                     <tr wire:key="{{ $queue->key }}-spacer" class="h-2 first:h-0"></tr>
                     <tr wire:key="{{ $queue->key }}-row">
@@ -26,6 +27,7 @@
                     {!! intval($queue->sum) !!}
                     </x-pulse::td>
                 @endforeach
+            </div>
             </tbody>
         </x-pulse::table>
     @endif
