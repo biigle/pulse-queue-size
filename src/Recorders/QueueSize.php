@@ -3,6 +3,7 @@
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
 use Laravel\Pulse\Facades\Pulse;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Queue\Events\JobPopped;
 use Illuminate\Queue\Events\JobQueued;
 
@@ -18,7 +19,6 @@ class QueueSize
     public array $listen = [
         JobQueued::class,
         JobPopped::class,
-        
     ];
 
     /**
@@ -35,12 +35,12 @@ class QueueSize
 
         if ($event instanceof JobQueued) {
             $queue = $event->queue ?: 'default';
-            $value = 1;
+            $value = Queue::size($queue);
         } else {
             $queue = $event->job->getQueue();
-            $value = -1;
+            $value = Queue::size($queue) - 1;
         }
 
-        Pulse::record('queue_size', $queue, $value)->sum()->onlyBuckets();
+        Pulse::set('queue_size', $queue, $value);
     }
 }

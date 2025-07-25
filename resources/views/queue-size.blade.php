@@ -24,7 +24,7 @@
                     {!! $queue->key !!}
                     </x-pulse::td>
                     <x-pulse::td class="max-w-[1px]">
-                    {!! intval($queue->sum) !!}
+                    {!! intval($queue->value) !!}
                     </x-pulse::td>
                 @endforeach
             </div>

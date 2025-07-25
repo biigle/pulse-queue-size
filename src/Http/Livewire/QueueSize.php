@@ -2,13 +2,14 @@
 
 namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 
+use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Livewire\Card;
 
 class QueueSize extends Card
 {
     public function render()
     {
-        $queues = $this->aggregate('queue_size', 'sum');
+        $queues = Pulse::values('queue_size');
         return view('pulse-queue-size-card::queue-size', ['queues' => $queues]);
     }
 }
