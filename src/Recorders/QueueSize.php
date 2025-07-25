@@ -41,6 +41,6 @@ class QueueSize
             $value = -1;
         }
 
-        Pulse::record('queue_size', $queue, $value)->sum();
+        Pulse::record('queue_size', $queue, $value)->sum()->onlyBuckets();
     }
 }
