@@ -19,7 +19,6 @@
             <div>
                 @foreach ($queues as $queue)
                     <tr wire:key="{{ $queue->key }}-spacer" class="h-2 first:h-0"></tr>
-                    <tr wire:key="{{ $queue->key }}-row">
                     <x-pulse::td class="max-w-[1px]">
                     {!! $queue->key !!}
                     </x-pulse::td>
