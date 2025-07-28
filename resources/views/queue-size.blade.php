@@ -1,5 +1,5 @@
 <x-pulse::card title="Queue Size" :cols="$cols">
-    <x-pulse::card-header name="Queue size"></x-pulse::card-header>
+    <x-pulse::card-header name="Queue Size"></x-pulse::card-header>
     <x-pulse::scroll :expand="$expand" wire:poll.5s="">
     @if($queues->isEmpty())
         <x-pulse::no-results />
@@ -12,7 +12,7 @@
             <x-pulse::thead>
                 <tr>
                     <x-pulse::th>Queue</x-pulse::th>
-                    <x-pulse::th>Jobs</x-pulse::th>
+                    <x-pulse::th>Size</x-pulse::th>
                 </tr>
             </x-pulse::thead>
             <tbody>
