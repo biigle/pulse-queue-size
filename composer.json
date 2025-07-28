@@ -8,9 +8,6 @@
       "issues": "https://github.com/biigle/pulse-queue-size/issues"
     },
     "homepage": "https://biigle.de",
-    "require": {
-        "laravel/pulse": "^1.4"
-    },
     "autoload": {
         "psr-4": {
             "Biigle\\PulseQueueSizeCard\\": "src/"
