@@ -5,6 +5,7 @@ namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Livewire\Card;
 
+#[Lazy]
 class QueueSize extends Card
 {
     public function render()
