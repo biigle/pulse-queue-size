@@ -8,7 +8,6 @@ use Illuminate\Queue\Events\JobPopped;
 use Illuminate\Queue\Events\JobQueued;
 
 
-// #[Lazy]
 class QueueSize
 {
     /**
