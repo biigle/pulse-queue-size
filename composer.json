@@ -1,6 +1,13 @@
 {
     "name": "biigle/pulse-queue-size-card",
     "description": "A Laravel pulse queue size card",
+    "keywords": ["biigle", "laravel-pulse"],
+    "license": "GPL-3.0-only",
+    "support": {
+      "source": "https://github.com/biigle/pulse-queue-size",
+      "issues": "https://github.com/biigle/pulse-queue-size/issues"
+    },
+    "homepage": "https://biigle.de",
     "require": {
         "laravel/pulse": "^1.4"
     },
