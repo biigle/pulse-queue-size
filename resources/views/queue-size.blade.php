@@ -1,14 +1,15 @@
 <x-pulse::card title="Queue Size" :cols="$cols">
-    <x-pulse::card-header name="Queue Size"></x-pulse::card-header>
+    <x-pulse::card-header name="Queue Size" details="now">
+        <x-slot:icon>
+            <x-pulse::icons.queue-list/>
+        </x-slot:icon>
+    </x-pulse::card-header>
     <x-pulse::scroll :expand="$expand" wire:poll.5s="">
     @if($queues->isEmpty())
         <x-pulse::no-results />
     @else
         <x-pulse::table>
-            <colgroup>
-                <col width="100%" />
-                <col width="100%" />
-            </colgroup>
+            <col width="100%" />
             <x-pulse::thead>
                 <tr>
                     <x-pulse::th>Queue</x-pulse::th>
