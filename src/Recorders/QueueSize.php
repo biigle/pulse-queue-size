@@ -2,9 +2,10 @@
 
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
+use Carbon\Carbon;
 use Laravel\Pulse\Facades\Pulse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Queue\Events\JobPopped;
 use Illuminate\Queue\Events\JobQueued;
 
 
@@ -17,29 +18,26 @@ class QueueSize
      */
     public array $listen = [
         JobQueued::class,
-        JobPopped::class,
     ];
 
     /**
      * Record the job.
      */
-    public function record(JobQueued|JobPopped $event): void
+    public function record(JobQueued $event): void
     {
         if ($event->connectionName === 'sync') {
             return;
         }
 
-        $queue = null;
-        $value = 0;
-
-        if ($event instanceof JobQueued) {
-            $queue = $event->queue ?: 'default';
-            $value = Queue::size($queue);
+        $queue = $event->queue ?: 'default';
+        $key = "queue_size.$queue";
+        if (Cache::has($key)) {
+            $value = 1;
         } else {
-            $queue = $event->job->getQueue();
-            $value = Queue::size($queue) - 1;
+            Cache::put($key, True);
+            $value = Queue::size($queue);
         }
 
-        Pulse::set('queue_size', $queue, $value);
+        Pulse::record('queue_size', $queue, $value)->sum();
     }
 }
