@@ -2,7 +2,6 @@
 
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
-use Carbon\Carbon;
 use Laravel\Pulse\Facades\Pulse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
@@ -30,14 +29,22 @@ class QueueSize
         }
 
         $queue = $event->queue ?: 'default';
-        $key = "queue_size.$queue";
-        if (Cache::has($key)) {
+        $type = "$event->connectionName:$queue";
+
+
+        if(!Cache::has('queue_size')){
+            Cache::put('queue_size', []);
+        }
+
+        if (in_array($type, Cache::get('queue_size'))) {
             $value = 1;
         } else {
-            Cache::put($key, True);
+            $types = Cache::get('queue_size');
+            $types[] = $type;
+            Cache::put('queue_size', $types); // wird das überhaupt gebraucht?
             $value = Queue::size($queue);
         }
 
-        Pulse::record('queue_size', $queue, $value)->sum();
+        Pulse::record($type, 'queue_size', $value)->sum();
     }
 }
