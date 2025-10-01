@@ -6,50 +6,53 @@ use Livewire\Livewire;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
-// #[Lazy]
+/**
+ * @internal
+ */
+#[Lazy]
 class QueueSize extends Card
 {
     public function render()
     {
         $tz = config('app.timezone');
-        $types = array_keys(Cache::get('queue_size', []));
+        $lastMins = config('pulse-ext.show_last_x_mins');
 
-        [$tmp, $time, $runAt] = $this->remember(fn() => 
-            DB::table('pulse_entries')
-                ->whereIn('type',$types)
-                ->orderBy('id')
-                ->select('type', 'value', 'timestamp')
-                ->where('timestamp', '>', Carbon::now()->subMinutes(30)->timestamp)
-                ->get()
-                ->groupBy('type')
-            );
+        [$queues, $time, $runAt] = $this->remember(
+            function () use ($tz, $lastMins) {
+                $queues = collect([]);
+                $types = config('pulse-ext.queues');
 
-        $queues = collect([]);
+                $query = DB::table('pulse_entries')
+                    ->where('timestamp', '>', Carbon::now()->subMinutes($lastMins)->timestamp)
+                    ->whereIn('type', $types)
+                    ->select('type', 'value', 'timestamp')
+                    ->orderBy('id');
 
-        foreach ($tmp as $queue => $results) {
-            $results = $results->values();
-            Log::info($results->count());
-            foreach ($results as $key => $value) {
-                $date = Carbon::createFromTimestamp($value->timestamp, $tz)->toDateTimeString();
+                foreach ($query->lazy() as $queue) {
+                    $name = $queue->type;
+                    $date = Carbon::createFromTimestamp($queue->timestamp, $tz)->toDateTimeString();
 
-                if (!isset($queues[$queue])){
-                    $queues[$queue] = collect([]);
+                    if (!isset($queues[$name])) {
+                        $queues[$name] = collect([]);
+                    }
+
+                    $queues[$name][$date] = $queue->value;
                 }
 
-                $queues[$queue][$date] = $value->value;
-                }
-        }
-
+                return $queues;
+            }
+        );
 
         if (Livewire::isLivewireRequest()) {
             foreach ($queues->keys() as $key => $value) {
-                $this->dispatch('queues-sizes-chart-update', 
-                queues: [$value => $queues[$value]], 
-                start: Carbon::now($tz)->subMinutes(30)->toDateTimeString(), 
-                end: Carbon::now($tz)->toDateTimeString());
+                $this->dispatch(
+                    'queues-sizes-chart-update',
+                    queues: [$value => $queues[$value]],
+                    start: Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
+                    end: Carbon::now($tz)->toDateTimeString()
+                );
             }
         }
 
@@ -57,7 +60,7 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'start' => Carbon::now($tz)->subMinutes(30)->toDateTimeString(),
+            'start' => Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
             'end' => Carbon::now($tz)->toDateTimeString(),
         ]);
     }

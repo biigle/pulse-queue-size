@@ -13,7 +13,7 @@
             <div class="grid gap-3 mx-px mb-px">
                 @foreach ($queues as $queue => $readings)
                     @php
-                        $last = $readings->flatten()->last();
+                        $queueCount = $readings->flatten()->last();
                         $queueInfo = explode(':', $queue);
                     @endphp
                     <div wire:key="{{ $queue }}">
@@ -29,7 +29,7 @@
                         <div class="mt-3 relative">
                             <div
                                 class="absolute -left-px -top-2 max-w-fit h-4 flex items-center px-1 text-xs leading-none text-white font-bold bg-purple-500 rounded">
-                                {{ number_format($last) }}
+                                {{ number_format($queueCount) }}
                             </div>
                             <div wire:ignore class="h-14" x-data="queueSizeChart({
                                 queue: '{{ $queue }}',
@@ -50,7 +50,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-
 
 @script
     <script>
@@ -140,7 +139,6 @@
             useDateTimeAxis(list) {
                 let res = []
                 Object.keys(list).forEach(function (k) {
-                    {{-- let date = new Date(k); --}}
                     res.push({x : k, y: list[k]})
                 })
                 return res;
