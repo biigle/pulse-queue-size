@@ -59,7 +59,6 @@
                         data: {
                             labels: [Object.keys(config.queues)],
                             datasets: this.createDataset(config.queues),
-                            colors: []
                         },
                         options: {
                             maintainAspectRatio: false,
@@ -89,7 +88,7 @@
                                     },
                                 y: {
                                     display: false,
-                                    min: 0,
+                                    min: -1,
                                     max: this.highest(Object.values(config.queues)),
                                 },
                             },
