@@ -42,8 +42,9 @@
             colors: {},
             createColorset(queues) {
                 let colors = {};
-                Object.keys(queues).forEach((q) => {
-                    colors[q] = "hsl(" + Math.random() * 360 + ", 100%, 75%)";
+                let s = 360 / Object.keys(queues).length;
+                Object.keys(queues).forEach((q, i) => {
+                    colors[q] = "hsl(" + s * i + ", 100%, 75%)";
                 });
                 this.colors = colors;
                 return colors;
