@@ -112,7 +112,7 @@
                     }
                 )
 
-                Livewire.on('queues-sizes-chart-update', ({queues, start, end}) => {
+                Livewire.on('queues-sizes-chart-update', ({queues}) => {
 
                     if (chart === undefined) {
                         return
