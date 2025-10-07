@@ -118,20 +118,12 @@
                         return
                     }
 
-
                     Object.keys(queues).forEach((q,i) => {
-                        chart.data.datasets[i].data = this.useDateTimeAxis(queues[q])
+                        chart.data.datasets[i].data = queues[q]
                     });
                     chart.options.scales.y.max = this.highest(queues)
                     chart.update()
                 })
-            },
-            useDateTimeAxis(list) {
-                let res = []
-                Object.keys(list).forEach(function (k) {
-                    res.push({x : k, y: list[k]})
-                })
-                return res;
             },
             highest(queues) {
                 let values = Object.values(queues);
@@ -144,7 +136,7 @@
                     res.push({
                         label: q,
                         borderColor: colors[q],
-                        data: this.useDateTimeAxis(queues[q]),
+                        data: queues[q],
                     })
                 });
                 return res;
