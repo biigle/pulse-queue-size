@@ -113,15 +113,28 @@
                     }
                 )
 
-                Livewire.on('queues-sizes-chart-update', ({queues}) => {
+                Livewire.on('queues-sizes-chart-update', ({ queues }) => {
 
                     if (chart === undefined) {
                         return
                     }
 
-                    Object.keys(queues).forEach((q,i) => {
+                    if (queues === undefined && chart) {
+                        chart.destroy()
+                        chart = undefined
+                        return
+                    }
+
+                    // Include new queues
+                    if (chart.data.labels.length < Object.keys(queues)) {
+                        chart.data.labels = [Object.keys(config.queues)]
+                        chart.data.datasets = this.createDataset(queues);
+                    }
+
+                    Object.keys(queues).forEach((q, i) => {
                         chart.data.datasets[i].data = queues[q]
                     });
+
                     chart.options.scales.y.max = this.highest(queues)
                     chart.update()
                 })
