@@ -6,7 +6,6 @@ use Livewire\Livewire;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * @internal
@@ -46,14 +45,12 @@ class QueueSize extends Card
         );
 
         if (Livewire::isLivewireRequest()) {
-            foreach ($queues->keys() as $key => $value) {
-                $this->dispatch(
-                    'queues-sizes-chart-update',
-                    queues: [$value => $queues[$value]],
-                    start: Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
-                    end: Carbon::now($tz)->toDateTimeString()
-                );
-            }
+            $this->dispatch(
+                'queues-sizes-chart-update',
+                queues: $queues,
+                start: Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
+                end: Carbon::now($tz)->toDateTimeString()
+            );
         }
 
         return view('pulse-queue-size-card::queue-size', [
