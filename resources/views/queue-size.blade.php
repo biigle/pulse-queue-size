@@ -140,7 +140,7 @@
             },
             highest(queues) {
                 let values = Object.values(queues);
-                return Math.max(values.map((q) => Math.max(Object.values(q)))) + 1
+                return Math.max(...values.map((q) => Math.max(...Object.values(q)))) + 1;
             },
             createDataset(queues) {
                 let res = [];
