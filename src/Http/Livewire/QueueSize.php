@@ -33,7 +33,7 @@ class QueueSize extends Card
                     ->orderBy('id');
 
                 foreach ($query->lazy() as $queue) {
-                    $name = $queue->type;
+                    $name = ucfirst($queue->type);
                     $date = Carbon::createFromTimestamp($queue->timestamp, $tz)->toDateTimeString();
 
                     if (!isset($queues[$name])) {

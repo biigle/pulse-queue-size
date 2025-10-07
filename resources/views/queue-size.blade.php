@@ -13,7 +13,7 @@
             <template x-for="(c,q) in $store.pulse.colors">
                 <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
                     <div class="h-0.5 w-3 rounded-full" :style="`background-color: ${c}`"></div>
-                    <div x-text="q" style="text-transform: capitalize"></div>
+                    <div x-text="q"></div>
                 </div>
             </template>
         </div>
