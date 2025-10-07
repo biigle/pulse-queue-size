@@ -29,11 +29,10 @@ class QueueSize
 
         // Record queue sizes
         if ($event->time->second % $interval == 0) {
-            $types = config('pulse-ext.queues');
-            foreach ($types as $type) {
-                $queue = collect(explode(':', $type))->last();
+            $queues = config('pulse-ext.queues');
+            foreach ($queues as $queue) {
                 $value = Queue::size($queue);
-                Pulse::record($type, config('pulse-ext.queue_list'), $value);
+                Pulse::record($queue, config('pulse-ext.queue_list'), $value);
             }
         }
     }
