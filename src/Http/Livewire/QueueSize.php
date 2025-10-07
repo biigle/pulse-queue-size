@@ -16,15 +16,18 @@ class QueueSize extends Card
     public function render()
     {
         $tz = config('app.timezone');
-        $lastMins = config('pulse-ext.show_last_x_mins');
 
         [$queues, $time, $runAt] = $this->remember(
-            function () use ($tz, $lastMins) {
+            function () use ($tz) {
                 $queues = collect([]);
                 $types = config('pulse-ext.queues');
 
                 $query = DB::table('pulse_entries')
-                    ->where('timestamp', '>', Carbon::now()->subMinutes($lastMins)->timestamp)
+                    ->where(
+                        'timestamp',
+                        '>=',
+                        Carbon::now()->subHours($this->periodAsInterval()->hours)->timestamp
+                    )
                     ->whereIn('type', $types)
                     ->select('type', 'value', 'timestamp')
                     ->orderBy('id');
@@ -48,8 +51,6 @@ class QueueSize extends Card
             $this->dispatch(
                 'queues-sizes-chart-update',
                 queues: $queues,
-                start: Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
-                end: Carbon::now($tz)->toDateTimeString()
             );
         }
 
@@ -57,8 +58,6 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'start' => Carbon::now($tz)->subMinutes($lastMins)->toDateTimeString(),
-            'end' => Carbon::now($tz)->toDateTimeString(),
         ]);
     }
 }

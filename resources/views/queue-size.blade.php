@@ -26,8 +26,6 @@
                     <div class="mt-3 relative">
                         <div wire:ignore class="h-14" x-data="queueSizeChart({
                             queues: @js($queues),
-                            start: '{{ $start }}',
-                            end: '{{ $end }}',
                         })">
                             <canvas x-ref="canvas"
                                 class="ring-1 ring-gray-900/5 dark:ring-gray-100/10 bg-gray-50 dark:bg-gray-800 rounded-md shadow-sm"></canvas>
@@ -37,9 +35,6 @@
             @endif
         </x-pulse::scroll>
     </x-pulse::card>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
 @script
     <script>
@@ -90,17 +85,7 @@
                             scales: {
                                 x: {
                                     display: false,
-                                    type: 'time',
-                                    time: {
-                                        unit: 'second',
-                                        tooltipFormat: 'HH:mm:ss',
-                                        displayFormats: {
-                                            second: 'HH:mm:ss',
-                                        },
                                     },
-                                    min: config.start,
-                                    max: config.end,
-                                },
                                 y: {
                                     display: false,
                                     min: 0,
@@ -110,6 +95,17 @@
                             plugins: {
                                 legend: {
                                     display: false,
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    position: 'nearest',
+                                    intersect: false,
+                                    callbacks: {
+                                        beforeBody: (context) => context
+                                            .map(item => `${item.dataset.label}: ${item.formattedValue}`)
+                                            .join(', '),
+                                        label: () => null,
+                                    },
                                 },
                             },
                         },
@@ -127,8 +123,6 @@
                         chart.data.datasets[i].data = this.useDateTimeAxis(queues[q])
                     });
                     chart.options.scales.y.max = this.highest(queues)
-                    chart.options.scales.x.min = start
-                    chart.options.scales.x.max = end
                     chart.update()
                 })
             },
