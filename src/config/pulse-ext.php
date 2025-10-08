@@ -6,6 +6,6 @@ return [
 
     'queue_list' => 'pulse_queues',
 
-    // Add queue to monitor
-    'queues' => [ 'default', 'high', 'gpu'],
+    // Add queues to monitor
+    'queues' => ['default'],
 ];
