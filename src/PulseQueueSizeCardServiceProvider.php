@@ -25,8 +25,8 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
     {
         Livewire::component('pulse-queue-size-card.queue-size', QueueSize::class);
 
-        $this->loadViewsFrom(__DIR__.'/../resources/views', "pulse-queue-size-card");
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', "pulse-queue-size-card");
 
-        $this->publishes([__DIR__.'/config/pulse-ext.php' => config_path('pulse-ext.php')]);
+        $this->publishes([__DIR__ . '/config/pulse-ext.php' => config_path('pulse-ext.php')]);
     }
 }
