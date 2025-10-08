@@ -45,7 +45,4 @@ class QueueSizeTest extends TestCase
             )
         );
     }
-
-
-
 }
