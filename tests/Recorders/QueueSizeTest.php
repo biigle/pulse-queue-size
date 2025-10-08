@@ -2,51 +2,50 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests;
 
-use Mockery;
+use Carbon\CarbonImmutable;
+use Laravel\Pulse\Events\SharedBeat;
 use Laravel\Pulse\Facades\Pulse;
-use Illuminate\Contracts\Queue\Job;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Queue\Events\JobPopped;
-use Illuminate\Queue\Events\JobQueued;
 use Illuminate\Foundation\Testing\TestCase;
 use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
 
 
 class QueueSizeTest extends TestCase
 {
-    public function testRecorderEnqueuedJob()
+    public function testRecorder()
     {
+        config(['pulse-ext.queues' => ['default']]);
+        $pulse_key = config('pulse-ext.queue_list');
+        $eventTime = CarbonImmutable::createFromTime(0, 0, 0);
         $recorder = new QueueSize;
-        $someJob = function () {};
 
         Queue::shouldReceive('size')->times(3)->andReturnValues([1, 2, 3]);
 
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 1)->once()->ordered();
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 2)->once()->ordered();
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 3)->once()->ordered();
+        Pulse::shouldReceive('record')->with('default', $pulse_key, 1)->once();
+        Pulse::shouldReceive('record')->with('default', $pulse_key, 2)->once();
+        Pulse::shouldReceive('record')->with('default', $pulse_key, 3)->once();
 
-        $recorder->record(new JobQueued("database", "default", 1, $someJob, "test", 0));
-        $recorder->record(new JobQueued("database", "default", 2, $someJob, "test", 0));
-        $recorder->record(new JobQueued("database", "default", 3, $someJob, "test", 0));
-
+        $recorder->record(new SharedBeat($eventTime, "test"));
+        $recorder->record(new SharedBeat($eventTime, "test"));
+        $recorder->record(new SharedBeat($eventTime, "test"));
     }
 
-    public function testRecorderPoppedJob()
+    public function testRecorderInvalidTime()
     {
+        config(['pulse-ext.queues' => ['default']]);
         $recorder = new QueueSize;
 
-        $job = Mockery::mock(Job::class);
-        $job->shouldReceive('getQueue')->andReturn('default')->times(3);
+        Queue::shouldReceive('size')->never();
+        Pulse::shouldReceive('record')->never();
 
-        Queue::shouldReceive('size')->times(3)->andReturnValues([3, 2, 1]);
-
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 2)->once()->ordered();
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 1)->once()->ordered();
-        Pulse::shouldReceive('set')->with('queue_size', 'default', 0)->once()->ordered();
-
-        $recorder->record(new JobPopped("", $job));
-        $recorder->record(new JobPopped("", $job));
-        $recorder->record(new JobPopped("", $job));
+        $recorder->record(
+            new SharedBeat(
+                CarbonImmutable::createFromTime(0, 0, 1),
+                "test"
+            )
+        );
     }
+
+
 
 }
