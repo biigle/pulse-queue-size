@@ -1,29 +1,52 @@
 <h1>Pulse Queue Size Card</h1>
-Displays for each queue the number of jobs that are currently enqueued.
+Displays the queue sizes of queues.
+
+<h2>Requirements</h2>
+
+Requires Laravel Pulse to be installed.
+
+```
+composer require laravel/pulse
+```
 
 <h2>Installation</h2>
 
+Install the local Laravel package by following the next steps.
+
+Add package path to composer.json
+
 ```
-composer require biigle/pulse-queue-size-card
+    "repositories": [
+    {
+        "type": "path",
+        "url": "path/to/pulse/queue/size/card"
+    }
+    ],
 ```
 
-<h3>Laravel</h3>
+Run
 
-The service provider is auto-discovered by Laravel.
-
+```
+composer require biigle/pulse-queue-size-card:@dev
+```
 
 <h3>Set up</h3>
 
-Add this to the providers array in the config/app.php.
+1. Make package path accessible by adding the next line to the app and worker service in the `docker-compose.yml`
+
+```
+    volumes:
+      - ./vendor/biigle/pulse-queue-size-card:/var/www/vendor/biigle/pulse-queue-size-card
+```
+
+2. Add the following line to the providers array in the `config/app.php`
 
 ```
 Biigle\PulseQueueSizeCard\PulseQueueSizeCardServiceProvider::class
 ```
 
-<br>
 
-
-Add the recorder to the recorder array in the config/pulse.php.
+3. Add the new recorder to the recorder array in the `config/pulse.php`
 
 ```
 Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
@@ -31,3 +54,10 @@ Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
             'sample_rate' => env('PULSE_QUEUES_SAMPLE_RATE', 1),
             ],
 ```
+
+4. Add the pulse card to the `resources/views/vendor/pulse/dashboard.blade.php` as follows
+
+```
+    <livewire:pulse-queue-size-card.queue-size cols="4"/>
+```
+5. Add the queue names to the queues array in the `config/pulse-ext.php` to monitor their size
