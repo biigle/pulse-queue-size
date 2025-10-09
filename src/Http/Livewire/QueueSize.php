@@ -23,6 +23,7 @@ class QueueSize extends Card
                 $types = config('pulse-ext.queues');
 
                 $query = DB::table('pulse_entries')
+                    ->where('key', '=', config('pulse-ext.queue_list'))
                     ->where(
                         'timestamp',
                         '>=',
