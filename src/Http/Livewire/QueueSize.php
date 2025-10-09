@@ -7,9 +7,6 @@ use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
 
-/**
- * @internal
- */
 #[Lazy]
 class QueueSize extends Card
 {
