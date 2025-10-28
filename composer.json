@@ -1,0 +1,29 @@
+{
+    "name": "biigle/pulse-queue-size-card",
+    "description": "A Laravel pulse queue size card",
+    "keywords": ["biigle", "laravel-pulse"],
+    "license": "GPL-3.0-only",
+    "support": {
+      "source": "https://github.com/biigle/pulse-queue-size",
+      "issues": "https://github.com/biigle/pulse-queue-size/issues"
+    },
+    "homepage": "https://biigle.de",
+    "autoload": {
+        "psr-4": {
+            "Biigle\\PulseQueueSizeCard\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Leane Schlundt",
+            "email": "lhecht@techfak.de"
+        }
+    ],
+    "extra": {
+        "laravel": {
+        "providers": [
+            "Biigle\\PulseQueueSizeCard\\PulseQueueSizeCardServiceProvider"
+        ]
+        }
+    }
+}
