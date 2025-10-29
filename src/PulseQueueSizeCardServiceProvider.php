@@ -15,7 +15,7 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->mergeConfigFrom(__DIR__.'/config/pulse-ext.php', 'pulse-ext');
     }
 
     /**
