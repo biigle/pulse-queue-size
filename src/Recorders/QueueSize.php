@@ -31,7 +31,8 @@ class QueueSize
         if ($event->time->second % $interval == 0) {
             $queues = config('pulse-ext.queues');
             foreach ($queues as $queue) {
-                $value = Queue::size($queue);
+                $queueName = explode(":", $queue)[1];
+                $value = Queue::size($queueName);
                 Pulse::record($queue, config('pulse-ext.queue_list'), $value);
             }
         }

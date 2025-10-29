@@ -7,5 +7,5 @@ return [
     'queue_list' => 'pulse_queues',
 
     // Add queues to monitor
-    'queues' => ['default'],
+    'queues' => ['database:default'],
 ];

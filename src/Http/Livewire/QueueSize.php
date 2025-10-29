@@ -31,25 +31,27 @@ class QueueSize extends Card
                     ->orderBy('id');
 
                 foreach ($query->lazy() as $queue) {
-                    $name = ucfirst($queue->type);
                     $date = Carbon::createFromTimestamp($queue->timestamp, $tz)->toDateTimeString();
 
-                    if (!isset($queues[$name])) {
-                        $queues[$name] = collect([]);
+                    if (!isset($queues[$queue->type])) {
+                        $queues[$queue->type] = collect([]);
                     }
 
-                    $queues[$name][$date] = $queue->value;
+                    $queues[$queue->type][$date] = $queue->value;
                 }
 
                 return $queues;
             }
         );
 
+        if (!sizeof($queues)) {
+            $queues = collect([]);
+        }
+
         if (Livewire::isLivewireRequest()) {
-            $this->dispatch(
-                'queues-sizes-chart-update',
-                queues: $queues,
-            );
+            foreach ($queues->keys() as $key => $value) {
+                $this->dispatch('queues-sizes-chart-update', queues: [$value => $queues[$value]]);
+            }
         }
 
         return view('pulse-queue-size-card::queue-size', [
