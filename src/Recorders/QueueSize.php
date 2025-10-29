@@ -30,8 +30,14 @@ class QueueSize
         // Record queue sizes
         if ($event->time->second % $interval == 0) {
             $queues = config('pulse-ext.queues');
+            $defaultConnection = config('queue.default');
             foreach ($queues as $queue) {
-                $queueName = explode(":", $queue)[1];
+                if (str_contains($queue, ":")) {
+                    $queueName = explode(":", $queue)[1];
+                } else {
+                    $queueName = $queue;
+                    $queue = "$defaultConnection:$queue";
+                }
                 $value = Queue::size($queueName);
                 Pulse::record($queue, config('pulse-ext.queue_list'), $value);
             }

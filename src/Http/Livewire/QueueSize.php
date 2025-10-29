@@ -17,7 +17,11 @@ class QueueSize extends Card
         [$queues, $time, $runAt] = $this->remember(
             function () use ($tz) {
                 $queues = collect([]);
-                $types = config('pulse-ext.queues');
+                $defaultConnection = config('queue.default');
+                $types = array_map(
+                    fn($q) => str_contains($q, ":") ? $q : "$defaultConnection:$q",
+                     config('pulse-ext.queues')
+                    );
 
                 $query = DB::table('pulse_entries')
                     ->where('key', '=', config('pulse-ext.queue_list'))
