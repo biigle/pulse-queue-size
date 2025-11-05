@@ -4,9 +4,9 @@ namespace Biigle\PulseQueueSizeCard;
 
 
 use Livewire\Livewire;
-use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
 
 use Illuminate\Support\ServiceProvider;
+use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
 
 class PulseQueueSizeCardServiceProvider extends ServiceProvider
 {
@@ -16,6 +16,7 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/config/pulse-ext.php', 'pulse-ext');
+        $this->loadMigrationsFrom(__DIR__.'/Database/mirgrations');
     }
 
     /**
