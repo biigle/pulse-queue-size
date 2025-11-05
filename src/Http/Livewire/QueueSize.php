@@ -6,7 +6,6 @@ use Livewire\Livewire;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 #[Lazy]
 class QueueSize extends Card
@@ -17,30 +16,24 @@ class QueueSize extends Card
 
         [$queues, $time, $runAt] = $this->remember(
             function () use ($tz) {
-                $queues = collect();
-                $query = DB::table('pulse_entries')
-                    ->where('key', '=', config('pulse-ext.queue_size_card_id'))
+                $queues = collect([]);
+                $query = DB::table('queue_sizes')
                     ->where(
                         'timestamp',
                         '>=',
-                        Carbon::now()->subHours($this->periodAsInterval()->hours)->timestamp
+                        Carbon::now('UTC')->subHours($this->periodAsInterval()->hours)
                     )
-                    ->select('type', 'value', 'timestamp')
                     ->orderBy('id');
 
-                foreach ($query->lazy() as $queue) {
-                    $date = Carbon::createFromTimestamp($queue->timestamp, $tz)->toDateTimeString();
-                    list($queueID, $status) = explode("$", $queue->type);
+                foreach ($query->lazy() as $record) {
+                    $date = Carbon::parse($record->timestamp)->setTimezone($tz)->toDateTimeString();
+                    $queue = $record->queue;
 
-                    if (!isset($queues[$queueID])) {
-                        $queues[$queueID] = collect();
+                    if (!isset($queues[$queue])) {
+                        $queues[$queue] = collect([]);
                     }
 
-                    if(!isset($queues[$queueID][$status])){
-                        $queues[$queueID][$status] = collect();
-                    }
-
-                    $queues[$queueID][$status][$date] = $queue->value;
+                    $queues[$queue][$date] = $record->values;
                 }
 
                 return $queues;
@@ -51,22 +44,16 @@ class QueueSize extends Card
             $queues = collect([]);
         }
 
-        $sums = [];
-        foreach ($queues->keys() as $index => $key) {
-            $sums[$key] = $queues[$key]->map(fn($q) => $q->values()->last())->sum();
-        }
-
         if (Livewire::isLivewireRequest()) {
             foreach ($queues->keys() as $index => $key) {
                 $this->dispatch('queues-sizes-chart-update', queues: [$key => $queues[$key]]);
             }
-        } 
+        }
 
         return view('pulse-queue-size-card::queue-size', [
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'sums' => $sums,
         ]);
     }
 }
