@@ -5,7 +5,7 @@
         <x-slot:icon>
             <x-pulse::icons.queue-list />
         </x-slot:icon>
-        </x-pulse::card-header>
+    </x-pulse::card-header>
 
     <div class="flex flex-wrap gap-4" style="margin-bottom: 15px;">
         <template x-for="(c,q) in $store.pulse.colors">
@@ -16,16 +16,15 @@
         </template>
     </div>
 
-
-    <x-pulse::scroll :expand="$expand" wire:poll.5s="">   
+    <x-pulse::scroll :expand="$expand" wire:poll.5s="">
         @if ($queues->isEmpty())
             <x-pulse::no-results />
         @else
             <div class="grid gap-3 mx-px mb-px">
                 @foreach ($queues as $queue => $readings)
                     @php
-                        list($connection, $queueID) = explode(':', $queue);
-                        $sum = $sums[$queue];
+        list($connection, $queueID) = explode(':', $queue);
+        $sum = collect(json_decode($readings->last(), true))->values()->sum();
                     @endphp
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
@@ -43,9 +42,9 @@
                                 {{ number_format($sum) }}
                             </div>
                             <div wire:ignore class="h-14" x-data="queueSizeChart({
-                                        queue: '{{ $queue }}',
-                                        readings: @js($readings),
-                                    })">
+                                                queue: '{{ $queue }}',
+                                                readings: @js($readings),
+                                            })">
                                 <canvas x-ref="canvas-{{ $queue }}"
                                     class="ring-1 ring-gray-900/5 dark:ring-gray-100/10 bg-gray-50 dark:bg-gray-800 rounded-md shadow-sm"></canvas>
                             </div>
@@ -62,10 +61,10 @@
     window.charts = []
     Alpine.store('pulse', {
         colors: {},
-        createColorset(queues) {
+        createColorset(states) {
             let colors = {};
-            let s = 360 / Object.keys(queues).length;
-            Object.keys(queues).forEach((q, i) => {
+            let s = 360 / states.length;
+            states.forEach((q, i) => {
                 colors[q] = "hsl(" + s * i + ", 100%, 75%)";
             });
             this.colors = colors;
@@ -135,22 +134,23 @@
                 ))
 
             Livewire.on('queues-sizes-chart-update', ({ queues }) => {
-                let q = Object.keys(queues)[0];
+                let queueID = Object.keys(queues)[0];
+                let queue = Object.values(queues)[0];
 
-                let chart = window.charts.filter((c) => c.canvas.getAttribute('x-ref').includes(q))[0]
+                let chart = window.charts.filter((c) => c.canvas.getAttribute('x-ref').includes(queueID))[0]
 
                 if (chart === undefined) {
                     return
                 }
 
-                let values = Object.values(Object.values(queues))[0];
+                [_, data] = this.getData(queue);
 
-                for (let i = 0; i < Object.keys(values).length; i++) {
-                    let key = chart.data.datasets[i].label
-                    chart.data.datasets[i].data = values[key];
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    let state = chart.data.datasets[i].label
+                    chart.data.datasets[i].data = data[state];
                 }
 
-                chart.options.scales.y.max = this.highest(Object.values(queues)[0])
+                chart.options.scales.y.max = this.highest(queue)
                 chart.options.scales.y.min = 0
 
                 chart.update()
@@ -158,26 +158,44 @@
         },
         highest(datasets) {
             let values = Object.values(datasets).reduce((res, o) => {
-                let v = Object.values(o);
-                res.push(v);
+                let v = Object.values(JSON.parse(o))
+                res.push(...v);
                 return res;
             }, []);
-            return Math.max(...values.flat()) + 1
-        },
-        createDataset(readings) {
-            let states = Object.keys(readings);
-            let color = this.$store.pulse.createColorset(readings);
 
-            let datasets = [];
-            states.forEach(function (s,i) {
-                datasets[i] = {
-                            label: s,
-                            borderColor: color[s],
-                            data: readings[s],
-                        };
+            return Math.max(...values) + 1
+        },
+        getData(readings) {
+            let states = Object.keys(JSON.parse(Object.values(readings)[0]));
+            res = states.reduce((tmp, s) => {
+                tmp[s] = {};
+                return tmp;
+            }, {});
+
+            Object.entries(readings).forEach((e) => {
+                [date, json] = e
+                json = JSON.parse(json);
+                states.forEach((s) => {
+                    res[s][date] = json[s];
+                });
             });
 
-            return datasets;           
+            return [states, res];
+        },
+        createDataset(readings) {
+            [states, data] = this.getData(readings);
+            let color = this.$store.pulse.createColorset(states);
+
+            let datasets = [];
+            states.forEach(function (s, i) {
+                datasets[i] = {
+                    label: s,
+                    borderColor: color[s],
+                    data: data[s],
+                };
+            });
+
+            return datasets;
         }
     }))
 </script>
