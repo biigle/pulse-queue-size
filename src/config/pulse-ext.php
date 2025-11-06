@@ -4,7 +4,7 @@ return [
 
     'record_interval' => 60,
 
-    'queue_list' => 'pulse_queues',
+    'queue_status' => ['pending', 'delayed', 'reserved'],
 
     // Add queues to monitor
     'queues' => ['default'],
