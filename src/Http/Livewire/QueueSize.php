@@ -17,7 +17,7 @@ class QueueSize extends Card
         [$queues, $time, $runAt] = $this->remember(
             function () use ($tz) {
                 $queues = collect([]);
-                $query = DB::table('queue_sizes')
+                $query = DB::table(config('pulse-ext.queue_size_table'))
                     ->where(
                         'timestamp',
                         '>=',

@@ -61,7 +61,7 @@ class QueueSize
                         $values[$state] = $output[$state];
                     }
 
-                    DB::table('queue_sizes')->insert([
+                    DB::table(config('pulse-ext.queue_size_table'))->insert([
                         'queue' => $queue,
                         'values' => json_encode($values),
                     ]);
