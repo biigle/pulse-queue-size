@@ -15,7 +15,8 @@ class QueueSize
     /**
      * Create a new recorder instance.
      */
-    public function __construct($key = 'queue_size') {
+    public function __construct($key = 'queue_size')
+    {
         $this->lockKey = $key;
     }
 

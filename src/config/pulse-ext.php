@@ -9,5 +9,5 @@ return [
     'prune_after' => 24,
 
     // Add queues to monitor
-    'queues' => ['default'],
+    'queues' => ['default', 'high'],
 ];

@@ -34,8 +34,10 @@ class QueueSizeTest extends ApiTestCase
         $this->assertEquals([$h1->queue, $h3->queue], $data['queues']->keys()->toArray());
         $this->assertEquals(
             [
-                [$getDate($h1->timestamp) => $h1->values,
-                $getDate($h2->timestamp) => $h2->values],
+                [
+                    $getDate($h1->timestamp) => $h1->values,
+                    $getDate($h2->timestamp) => $h2->values
+                ],
                 [$getDate($h3->timestamp) => $h3->values]
             ],
             $data['queues']->values()->toArray()
@@ -72,8 +74,10 @@ class QueueSizeTest extends ApiTestCase
         $this->assertCount(1, $data['queues']);
         $this->assertEquals($h1->queue, $data['queues']->keys()->first());
 
-        $exp = [$getDate($h1->timestamp) => $h1->values,
-                $getDate($h2->timestamp) => $h2->values];
+        $exp = [
+            $getDate($h1->timestamp) => $h1->values,
+            $getDate($h2->timestamp) => $h2->values
+        ];
         $res = $data['queues']->values()->toArray();
         $this->assertEquals(sort($exp), sort($res));
     }

@@ -29,7 +29,8 @@ class PulseQueueHistory extends Model
         'values' => 'array', // cast JSON string to PHP array
     ];
 
-    protected static function factory(){
+    protected static function factory()
+    {
         return PulseQueueHistoryFactory::new();
     }
 }

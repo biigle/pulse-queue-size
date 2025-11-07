@@ -21,8 +21,7 @@ class QueueSize extends Card
                     'timestamp',
                     '>=',
                     Carbon::now('UTC')->subHours($this->periodAsInterval()->hours)
-                )
-                    ->orderBy('id');
+                )->orderBy('id');
 
                 foreach ($query->lazy() as $record) {
                     $date = Carbon::parse($record->timestamp)->setTimezone($tz)->toDateTimeString();
