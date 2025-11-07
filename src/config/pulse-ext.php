@@ -6,8 +6,6 @@ return [
 
     'queue_status' => ['pending', 'delayed', 'reserved'],
 
-    'queue_size_table' => 'queue_sizes',
-
     'prune_after' => 24,
 
     // Add queues to monitor
