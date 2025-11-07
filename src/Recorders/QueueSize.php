@@ -3,21 +3,30 @@
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
 
-use Illuminate\Support\Facades\DB;
 use Laravel\Pulse\Events\SharedBeat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 
 
 class QueueSize
 {
 
     /**
+     * Create a new recorder instance.
+     */
+    public function __construct($key = 'queue_size') {
+        $this->lockKey = $key;
+    }
+
+    /**
      * Key to save update timestamps in cache
      *
      * @var string
      */
-    protected string $LAST_UPDATE_KEY = 'queue_size_updated_at';
+    protected string $lastUpdatedKey = 'queue_size_updated_at';
+
+    protected string $lockKey;
 
     /**
      * The events to listen for.
@@ -33,17 +42,17 @@ class QueueSize
      */
     public function record(): void
     {
-        $lock = Cache::lock('queue_size', 60);
+        $lock = Cache::lock($this->lockKey, 60);
 
         // Ensures only a single machine is executing the code
         if ($lock->get()) {
             // Default: 60 seconds
-            $interval = 10;
-            $lastUpdate = Cache::get($this->LAST_UPDATE_KEY);
+            $interval = config('pulse-ext.record_interval');
+            $lastUpdate = Cache::get($this->lastUpdatedKey);
 
             // Record queue sizes
             if ($lastUpdate === null || $lastUpdate->addSeconds($interval)->isNowOrPast()) {
-                Cache::put($this->LAST_UPDATE_KEY, now());
+                Cache::put($this->lastUpdatedKey, now());
                 $status = config('pulse-ext.queue_status');
                 $queues = config('pulse-ext.queues');
                 $defaultConnection = config('queue.default');
