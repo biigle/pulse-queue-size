@@ -2,9 +2,8 @@
 
 namespace Biigle\PulseQueueSizeCard\Console\Commands;
 
-
+use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class PruneOldRecords extends Command
 {
@@ -29,12 +28,11 @@ class PruneOldRecords extends Command
      */
     public function handle()
     {
-        DB::table(config('pulse-ext.queue_size_table'))
-            ->where(
-                'timestamp',
-                '<',
-                now()->subHours(config('pulse-ext.prune_after'))
-            )
+        PulseQueueHistory::where(
+            'timestamp',
+            '<',
+            now()->subHours(config('pulse-ext.prune_after'))
+        )
             ->delete();
     }
 }

@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('queue_sizes', function (Blueprint $table) {
+        Schema::create('pulse_queue_histories', function (Blueprint $table) {
             $table->id();
             $table->timestampTz('timestamp')->useCurrent();
             $table->string('queue');
-            $table->json('values');
+            $table->jsonb('values');
         });
     }
 
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('queue_sizes');
+        Schema::dropIfExists('pulse_queue_histories');
     }
 };

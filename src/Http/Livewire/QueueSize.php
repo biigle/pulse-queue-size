@@ -2,10 +2,10 @@
 
 namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 
+use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use Livewire\Livewire;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
-use Illuminate\Support\Facades\DB;
 
 #[Lazy]
 class QueueSize extends Card
@@ -17,12 +17,11 @@ class QueueSize extends Card
         [$queues, $time, $runAt] = $this->remember(
             function () use ($tz) {
                 $queues = collect([]);
-                $query = DB::table(config('pulse-ext.queue_size_table'))
-                    ->where(
-                        'timestamp',
-                        '>=',
-                        Carbon::now('UTC')->subHours($this->periodAsInterval()->hours)
-                    )
+                $query = PulseQueueHistory::where(
+                    'timestamp',
+                    '>=',
+                    Carbon::now('UTC')->subHours($this->periodAsInterval()->hours)
+                )
                     ->orderBy('id');
 
                 foreach ($query->lazy() as $record) {
