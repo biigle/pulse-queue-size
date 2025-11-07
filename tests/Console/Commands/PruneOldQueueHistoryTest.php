@@ -5,7 +5,7 @@ namespace Biigle\PulseQueueSizeCard\Tests\Console\Commands;
 use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use TestCase;
 
-class PruneOldRecordsTest extends TestCase
+class PruneOldQueueHistoryTest extends TestCase
 {
     public function testHandle()
     {

@@ -5,7 +5,7 @@ namespace Biigle\PulseQueueSizeCard\Console\Commands;
 use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use Illuminate\Console\Command;
 
-class PruneOldRecords extends Command
+class PruneOldQueueHistory extends Command
 {
     /**
      * The console command name.
@@ -19,7 +19,7 @@ class PruneOldRecords extends Command
      *
      * @var string
      */
-    protected $description = "Delete queue size records older than 24h.";
+    protected $description = "Delete pulse queue history records older than 24h.";
 
     /**
      * Execute the command.

@@ -8,7 +8,7 @@ use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
-use Biigle\PulseQueueSizeCard\Console\Commands\PruneOldRecords;
+use Biigle\PulseQueueSizeCard\Console\Commands\PruneOldQueueHistory;
 
 class PulseQueueSizeCardServiceProvider extends ServiceProvider
 {
@@ -34,13 +34,13 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                PruneOldRecords::class
+                PruneOldQueueHistory::class
             ]);
 
             $this->app->booted(function () {
                 $schedule = app(Schedule::class);
 
-                $schedule->command(PruneOldRecords::class)
+                $schedule->command(PruneOldQueueHistory::class)
                     ->daily()
                     ->onOneServer();
             });
