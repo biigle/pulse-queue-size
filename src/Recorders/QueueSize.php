@@ -25,9 +25,14 @@ class QueueSize
      *
      * @var string
      */
-    protected string $lastUpdatedKey = 'queue_size_updated_at';
+    protected $lastUpdatedKey = 'queue_size_updated_at';
 
-    protected string $lockKey;
+    /**
+     * Key of cache lock that can be acquired
+     *
+     * @var string
+     */
+    protected $lockKey;
 
     /**
      * The events to listen for.
