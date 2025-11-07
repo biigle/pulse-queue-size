@@ -10,8 +10,7 @@ class PruneOldQueueHistoryTest extends TestCase
     public function testHandle()
     {
         config(['pulse-ext.prune_after' => 1]);
-
-        $values = ['test' => 'test'];
+        $values = '{"test": "test"}';
 
         PulseQueueHistory::factory()->create([
             'timestamp' => now()->subHour()->subMinute()
@@ -19,7 +18,7 @@ class PruneOldQueueHistoryTest extends TestCase
 
         PulseQueueHistory::factory()->create([
             'queue' => 'test2',
-            'values' => json_encode($values),
+            'values' => $values,
         ]);
 
         $res = PulseQueueHistory::get()->toArray();
@@ -31,6 +30,6 @@ class PruneOldQueueHistoryTest extends TestCase
         $res = PulseQueueHistory::get()->toArray();
         $this->assertCount(1, $res);
         $this->assertEquals('test2', $res[0]['queue']);
-        $this->assertEquals(json_encode($values), $res[0]['values']);
+        $this->assertEquals($values, $res[0]['values']);
     }
 }
