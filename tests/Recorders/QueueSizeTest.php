@@ -2,47 +2,58 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests;
 
-use Carbon\CarbonImmutable;
-use Laravel\Pulse\Events\SharedBeat;
-use Laravel\Pulse\Facades\Pulse;
-use Illuminate\Support\Facades\Queue;
+use Biigle\PulseQueueSizeCard\PulseQueueHistory;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\TestCase;
 use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 
 class QueueSizeTest extends TestCase
 {
+    use RefreshDatabase;
     public function testRecorder()
     {
-        config(['pulse-ext.queues' => ['default']]);
-        $pulse_key = config('pulse-ext.queue_list');
-        $eventTime = CarbonImmutable::createFromTime(0, 0, 0);
+        $defaultConnection = config('queue.default');
         $recorder = new QueueSize;
+        $value = '[{"pending":0,"delayed":0,"reserved":0}]';
 
-        Queue::shouldReceive('size')->times(3)->andReturnValues([1, 2, 3]);
+        Artisan::shouldReceive('call')->twice();
+        Artisan::shouldReceive('output')->twice()->andReturnValues([$value, $value]);
 
-        Pulse::shouldReceive('record')->with('default', $pulse_key, 1)->once();
-        Pulse::shouldReceive('record')->with('default', $pulse_key, 2)->once();
-        Pulse::shouldReceive('record')->with('default', $pulse_key, 3)->once();
+        config(['pulse-ext.queues' => ['default']]);
+        $recorder->record();
 
-        $recorder->record(new SharedBeat($eventTime, "test"));
-        $recorder->record(new SharedBeat($eventTime, "test"));
-        $recorder->record(new SharedBeat($eventTime, "test"));
+        config(['pulse-ext.queues' => ['high']]);
+        Carbon::setTestNow(now()->addSeconds(config('pulse-ext.record_interval')));
+        $recorder->record();
+
+        // should be ignored since it is too early to record
+        $recorder->record();
+
+        $entries = PulseQueueHistory::get()->toArray();
+        $valuesArray = json_decode($value)[0];
+        $this->assertCount(2, $entries);
+        $this->assertEquals("$defaultConnection:default", $entries[0]['queue']);
+        $this->assertEquals($valuesArray, json_decode($entries[0]['values']));
+        $this->assertEquals("$defaultConnection:high", $entries[1]['queue']);
+        $this->assertEquals($valuesArray, json_decode($entries[1]['values']));
     }
 
-    public function testRecorderInvalidTime()
+    public function testRecorderLocked()
     {
-        config(['pulse-ext.queues' => ['default']]);
-        $recorder = new QueueSize;
+        $lockKey = "test";
+        $recorder = new QueueSize($lockKey);
 
-        Queue::shouldReceive('size')->never();
-        Pulse::shouldReceive('record')->never();
+        // Simulate another machine acquiring the lock
+        $lock = Cache::lock($lockKey, 10);
+        $lock->get();
+        $recorder->record();
 
-        $recorder->record(
-            new SharedBeat(
-                CarbonImmutable::createFromTime(0, 0, 1),
-                "test"
-            )
-        );
+        $entries = PulseQueueHistory::get();
+        $this->assertEmpty($entries);
+        $lock->release();
     }
 }

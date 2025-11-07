@@ -2,8 +2,8 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests\Console\Commands;
 
+use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use TestCase;
-use Illuminate\Support\Facades\DB;
 
 class PruneOldRecordsTest extends TestCase
 {
@@ -13,26 +13,24 @@ class PruneOldRecordsTest extends TestCase
 
         $values = ['test' => 'test'];
 
-        $table = DB::table(config('pulse-ext.queue_size_table'));
-
-        $table->insert([
-            'queue' => 'test1',
-            'values' => json_encode($values),
-            'timestamp' => now()->subMinutes(61)
+        PulseQueueHistory::factory()->create([
+            'timestamp' => now()->subHour()->subMinute()
         ]);
 
-        $table->insert([
+        PulseQueueHistory::factory()->create([
             'queue' => 'test2',
             'values' => json_encode($values),
         ]);
 
-        $this->assertCount(2, $table->get());
+        $res = PulseQueueHistory::get()->toArray();
+
+        $this->assertCount(2, $res);
 
         $this->artisan('pulse-queue-size-card:prune')->assertExitCode(0);
 
-        $entry = $table->first();
-        $this->assertCount(1, $table->get());
-        $this->assertEquals('test2', $entry->queue);
-        $this->assertEquals(json_encode($values), $entry->values);
+        $res = PulseQueueHistory::get()->toArray();
+        $this->assertCount(1, $res);
+        $this->assertEquals('test2', $res[0]['queue']);
+        $this->assertEquals(json_encode($values), $res[0]['values']);
     }
 }
