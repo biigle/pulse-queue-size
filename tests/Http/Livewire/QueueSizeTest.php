@@ -2,83 +2,96 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests\Http\Livewire;
 
-use ApiTestCase;
-use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
+use TestCase;
 
-class QueueSizeTest extends ApiTestCase
+class QueueSizeTest extends TestCase
 {
-
     public function testRender()
     {
-        $tz = config('app.timezone');
-        $h1 = PulseQueueHistory::factory()->create()->fresh();
-        $h2 = PulseQueueHistory::factory()->create([
-            'queue' => $h1->queue,
-            'timestamp' => now()->addSeconds(60)
-        ])->fresh();
-        $h3 = PulseQueueHistory::factory()->create()->fresh();
+        $id = config('pulse-ext.queue_size_card_id');
+
+        $r1 = ['hello:world', 'pending', $id, 10, now()];
+        $r2 = ['hello:world', 'delayed', $id, 9, now()->addSeconds(60)];
+        $r3 = ['world:test', 'reserved', $id, 8, now()];
+
+        $this->record($r1);
+        $this->record($r2);
+        $this->record($r3);
 
         $controller = new QueueSize();
         $data = $controller->render()->getData();
-
-        $getDate = fn($d) => Carbon::parse($d)
-            ->setTimezone($tz)
-            ->toDateTimeString();
 
         $this->assertCount(3, $data);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
-        $this->assertEquals([$h1->queue, $h3->queue], $data['queues']->keys()->toArray());
-        $this->assertEquals(
+        $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
+        $exp = [
             [
-                [
-                    $getDate($h1->timestamp) => $h1->values,
-                    $getDate($h2->timestamp) => $h2->values
-                ],
-                [$getDate($h3->timestamp) => $h3->values]
+                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
+                $r2[1] => [$this->getDate($r2[4]) => $r2[3]]
             ],
-            $data['queues']->values()->toArray()
-        );
+            [
+                $r3[1] => [$this->getDate($r3[4]) => $r3[3]]
+            ]
+        ];
+        $this->assertEquals($exp, $data['queues']->values()->toArray());
     }
 
     public function testRenderPeriod()
     {
         $periodHour = 6;
-        $tz = config('app.timezone');
+        $id = config('pulse-ext.queue_size_card_id');
 
-        $h1 = PulseQueueHistory::factory()->create();
-        $h2 = PulseQueueHistory::factory()->create([
-            'queue' => $h1->queue,
-            'timestamp' => now()->subHours($periodHour)->setTimezone('UTC')
-        ])->fresh();
+        $r1 = ['test:test', 'pending', $id, 10, now()];
+        $r2 = ['test:test', 'pending', $id, 9, now()->subHours($periodHour)];
         // should be ignored
-        PulseQueueHistory::factory()->create([
-            'queue' => $h1->queue,
-            'timestamp' => now()->subHours($periodHour)->subMinute()->setTimezone('UTC')
-        ]);
+        $r3 = ['hello:world', 'pending', $id, 8, now()->subHours($periodHour)->subMinute()];
+
+        $this->record($r1);
+        $this->record($r2);
+        $this->record($r3);
 
         $controller = new QueueSize();
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
 
-        $getDate = fn($d) => Carbon::parse($d)
-            ->setTimezone($tz)
-            ->toDateTimeString();
-
         $this->assertCount(3, $data);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(1, $data['queues']);
-        $this->assertEquals($h1->queue, $data['queues']->keys()->first());
-
+        $this->assertEquals($r1[0], $data['queues']->keys()->first());
         $exp = [
-            $getDate($h1->timestamp) => $h1->values,
-            $getDate($h2->timestamp) => $h2->values
+            $r1[1] => [
+                $this->getDate($r1[4]) => $r1[3],
+                $this->getDate($r2[4]) => $r2[3]
+            ]
         ];
         $res = $data['queues']->values()->toArray();
-        $this->assertEquals(sort($exp), sort($res));
+        $this->assertEquals($exp, $res[0]);
+    }
+
+    public function record($values)
+    {
+        list($queue, $status, $key, $value, $timestamp) = $values;
+        $type = $queue . '$' . $status;
+        DB::table('pulse_entries')->insert([
+            'type' => $type,
+            'key' => $key,
+            'value' => $value,
+            'timestamp' => $timestamp->timestamp
+        ]);
+    }
+
+    public function getDate($d)
+    {
+        $tz = config('app.timezone');
+
+        return Carbon::parse($d)
+            ->setTimezone($tz)
+            ->toDateTimeString();
     }
 }

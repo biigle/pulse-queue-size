@@ -2,44 +2,68 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests;
 
-use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 use Illuminate\Support\Carbon;
+use Laravel\Pulse\Facades\Pulse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\TestCase;
 use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 
 class QueueSizeTest extends TestCase
 {
-    use RefreshDatabase;
     public function testRecorder()
     {
+        $id = config('pulse-ext.queue_size_card_id');
         $defaultConnection = config('queue.default');
         $recorder = new QueueSize;
-        $value = '[{"pending":0,"delayed":0,"reserved":0}]';
+        $value = '[{"pending":1,"delayed":2,"reserved":3}]';
 
         Artisan::shouldReceive('call')->twice();
         Artisan::shouldReceive('output')->twice()->andReturnValues([$value, $value]);
 
-        config(['pulse-ext.queues' => ['default']]);
+        $queue = 'default';
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$pending', $id, 1);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$delayed', $id, 2);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$reserved', $id, 3);
+
+        config(['pulse-ext.queues' => [$queue]]);
         $recorder->record();
 
-        config(['pulse-ext.queues' => ['high']]);
+        $queue = 'high';
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$pending', $id, 1);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$delayed', $id, 2);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($defaultConnection . ':' . $queue . '$reserved', $id, 3);
+
+        config(['pulse-ext.queues' => [$queue]]);
         Carbon::setTestNow(now()->addSeconds(config('pulse-ext.record_interval')));
         $recorder->record();
 
         // should be ignored since it is too early to record
+        Pulse::shouldReceive('record')->never();
         $recorder->record();
-
-        $entries = PulseQueueHistory::get()->toArray();
-        $valuesArray = json_decode($value)[0];
-        $this->assertCount(2, $entries);
-        $this->assertEquals("$defaultConnection:default", $entries[0]['queue']);
-        $this->assertEquals($valuesArray, json_decode($entries[0]['values']));
-        $this->assertEquals("$defaultConnection:high", $entries[1]['queue']);
-        $this->assertEquals($valuesArray, json_decode($entries[1]['values']));
     }
 
     public function testRecorderLocked()
@@ -47,13 +71,13 @@ class QueueSizeTest extends TestCase
         $lockKey = "test";
         $recorder = new QueueSize($lockKey);
 
-        // Simulate another machine acquiring the lock
-        $lock = Cache::lock($lockKey, 10);
-        $lock->get();
-        $recorder->record();
+        Pulse::shouldReceive('record')->never();
 
-        $entries = PulseQueueHistory::get();
-        $this->assertEmpty($entries);
+        // Simulate another machine acquiring the lock
+        $lock = Cache::lock($lockKey);
+        $lock->get();
+
+        $recorder->record();
         $lock->release();
     }
 }
