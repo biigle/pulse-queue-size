@@ -8,6 +8,6 @@ return [
 
     'queue_size_card_id' => 'queue_size',
 
-    // Add queues to monitor
-    'queues' => ['default', 'high'],
+    // Add queues to monitor, e.g, <connection>:<queue> or <queue>
+    'queues' => ['default'],
 ];
