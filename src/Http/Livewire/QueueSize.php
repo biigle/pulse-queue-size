@@ -6,7 +6,6 @@ use Livewire\Livewire;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 #[Lazy]
 class QueueSize extends Card
@@ -52,7 +51,7 @@ class QueueSize extends Card
         }
 
         if (Livewire::isLivewireRequest()) {
-            foreach ($queues->keys() as $index => $key) {
+            foreach ($queues->keys() as $key) {
                 $this->dispatch('queues-sizes-chart-update', queues: [$key => $queues[$key]]);
             }
         } 
