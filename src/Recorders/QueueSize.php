@@ -3,6 +3,7 @@
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
 
+use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Events\SharedBeat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
@@ -60,6 +61,7 @@ class QueueSize
             if ($lastUpdate === null || $lastUpdate->addSeconds($interval)->isNowOrPast()) {
                 Cache::put($this->lastUpdatedKey, now());
                 $status = config('pulse-ext.queue_status');
+                $id = config('pulse-ext.queue_size_card_id');
                 $queues = config('pulse-ext.queues');
                 $defaultConnection = config('queue.default');
 
@@ -71,12 +73,9 @@ class QueueSize
                     Artisan::call("queue:monitor $queue --json");
                     $output = json_decode(Artisan::output(), true)[0];
 
-                    $values = [];
                     foreach ($status as $state) {
-                        $values[$state] = $output[$state];
+                        Pulse::record($queue . "$$state", $id, $output[$state]);
                     }
-
-                    PulseQueueHistory::create(['queue' => $queue, 'values' => json_encode($values)]);
                 }
             }
 
