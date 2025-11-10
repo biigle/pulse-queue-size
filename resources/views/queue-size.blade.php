@@ -5,7 +5,7 @@
         <x-slot:icon>
             <x-pulse::icons.queue-list />
         </x-slot:icon>
-        </x-pulse::card-header>
+    </x-pulse::card-header>
 
     <div class="flex flex-wrap gap-4" style="margin-bottom: 15px;">
         <template x-for="(c,q) in $store.pulse.colors">
@@ -16,15 +16,15 @@
         </template>
     </div>
 
-    <x-pulse::scroll :expand="$expand" wire:poll.5s="">   
+    <x-pulse::scroll :expand="$expand" wire:poll.5s="">
         @if ($queues->isEmpty())
             <x-pulse::no-results />
         @else
             <div class="grid gap-3 mx-px mb-px">
                 @foreach ($queues as $queue => $readings)
                     @php
-        list($connection, $queueID) = explode(':', $queue);
-        $sum = $readings->map(fn($q) => $q->values()->last())->sum()
+                        list($connection, $queueID) = explode(':', $queue);
+                        $sum = $readings->map(fn($q) => $q->values()->last())->sum()
                     @endphp
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
@@ -42,9 +42,9 @@
                                 {{ number_format($sum) }}
                             </div>
                             <div wire:ignore class="h-14" x-data="queueSizeChart({
-                                        queue: '{{ $queue }}',
-                                        readings: @js($readings),
-                                    })">
+                                                queue: '{{ $queue }}',
+                                                readings: @js($readings),
+                                            })">
                                 <canvas x-ref="canvas-{{ $queue }}"
                                     class="ring-1 ring-gray-900/5 dark:ring-gray-100/10 bg-gray-50 dark:bg-gray-800 rounded-md shadow-sm"></canvas>
                             </div>
@@ -167,15 +167,15 @@
             let color = this.$store.pulse.createColorset(readings);
 
             let datasets = [];
-            states.forEach(function (s,i) {
+            states.forEach(function (s, i) {
                 datasets[i] = {
-                            label: s,
-                            borderColor: color[s],
-                            data: readings[s],
-                        };
+                    label: s,
+                    borderColor: color[s],
+                    data: readings[s],
+                };
             });
 
-            return datasets;           
+            return datasets;
         }
     }))
 </script>

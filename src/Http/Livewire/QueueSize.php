@@ -35,7 +35,7 @@ class QueueSize extends Card
                         $queues[$queueID] = collect();
                     }
 
-                    if(!isset($queues[$queueID][$status])){
+                    if (!isset($queues[$queueID][$status])) {
                         $queues[$queueID][$status] = collect();
                     }
 
@@ -54,7 +54,7 @@ class QueueSize extends Card
             foreach ($queues->keys() as $key) {
                 $this->dispatch('queues-sizes-chart-update', queues: [$key => $queues[$key]]);
             }
-        } 
+        }
 
         return view('pulse-queue-size-card::queue-size', [
             'queues' => $queues,
