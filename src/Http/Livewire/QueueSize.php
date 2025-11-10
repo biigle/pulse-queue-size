@@ -51,11 +51,6 @@ class QueueSize extends Card
             $queues = collect([]);
         }
 
-        $sums = [];
-        foreach ($queues->keys() as $index => $key) {
-            $sums[$key] = $queues[$key]->map(fn($q) => $q->values()->last())->sum();
-        }
-
         if (Livewire::isLivewireRequest()) {
             foreach ($queues->keys() as $index => $key) {
                 $this->dispatch('queues-sizes-chart-update', queues: [$key => $queues[$key]]);
@@ -66,7 +61,6 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'sums' => $sums,
         ]);
     }
 }

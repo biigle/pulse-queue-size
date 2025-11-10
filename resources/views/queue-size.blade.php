@@ -24,7 +24,7 @@
                 @foreach ($queues as $queue => $readings)
                     @php
                         list($connection, $queueID) = explode(':', $queue);
-                        $sum = $sums[$queue];
+                        $sum = $readings->map(fn($q) => $q->values()->last())->sum()
                     @endphp
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
