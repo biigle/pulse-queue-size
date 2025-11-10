@@ -23,8 +23,8 @@
             <div class="grid gap-3 mx-px mb-px">
                 @foreach ($queues as $queue => $readings)
                     @php
-                        list($connection, $queueID) = explode(':', $queue);
-                        $sum = $readings->map(fn($q) => $q->values()->last())->sum()
+        list($connection, $queueID) = explode(':', $queue);
+        $sum = $readings->map(fn($q) => $q->values()->last())->sum()
                     @endphp
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
@@ -134,25 +134,24 @@
                 ))
 
             Livewire.on('queues-sizes-chart-update', ({ queues }) => {
-                let q = Object.keys(queues)[0];
-
-                let chart = window.charts.filter((c) => c.canvas.getAttribute('x-ref').includes(q))[0]
+                let queue = Object.keys(queues)[0];
+                let chart = window.charts.filter((c) => c.canvas.getAttribute('x-ref').includes(queue))[0];
 
                 if (chart === undefined) {
-                    return
+                    return;
                 }
 
                 let values = Object.values(Object.values(queues))[0];
 
                 for (let i = 0; i < Object.keys(values).length; i++) {
-                    let key = chart.data.datasets[i].label
+                    let key = chart.data.datasets[i].label;
                     chart.data.datasets[i].data = values[key];
                 }
 
-                chart.options.scales.y.max = this.highest(Object.values(queues)[0])
-                chart.options.scales.y.min = 0
+                chart.options.scales.y.max = this.highest(Object.values(queues)[0]);
+                chart.options.scales.y.min = 0;
 
-                chart.update()
+                chart.update();
             })
         },
         highest(datasets) {
