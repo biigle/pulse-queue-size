@@ -7,7 +7,6 @@ use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Events\SharedBeat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
-use Biigle\PulseQueueSizeCard\PulseQueueHistory;
 
 
 class QueueSize
