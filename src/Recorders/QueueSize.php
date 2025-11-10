@@ -15,6 +15,9 @@ class QueueSize
 
     /**
      * Create a new recorder instance.
+     *
+     * @param string $key Cache key for lock
+     *
      */
     public function __construct($key = 'queue_size')
     {
