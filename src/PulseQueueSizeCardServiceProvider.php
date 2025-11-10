@@ -6,9 +6,7 @@ namespace Biigle\PulseQueueSizeCard;
 use Livewire\Livewire;
 use Illuminate\Support\ServiceProvider;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
-use Biigle\PulseQueueSizeCard\Console\Commands\PruneOldQueueHistory;
 
 class PulseQueueSizeCardServiceProvider extends ServiceProvider
 {
@@ -18,7 +16,6 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/config/pulse-ext.php', 'pulse-ext');
-        $this->loadMigrationsFrom(__DIR__.'/Database/mirgrations');
     }
 
     /**
@@ -31,20 +28,6 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', "pulse-queue-size-card");
 
         $this->publishes([__DIR__ . '/config/pulse-ext.php' => config_path('pulse-ext.php')]);
-
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                PruneOldQueueHistory::class
-            ]);
-
-            $this->app->booted(function () {
-                $schedule = app(Schedule::class);
-
-                $schedule->command(PruneOldQueueHistory::class)
-                    ->daily()
-                    ->onOneServer();
-            });
-        }
     }
 
 }

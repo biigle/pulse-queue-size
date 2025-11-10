@@ -6,7 +6,7 @@ return [
 
     'queue_status' => ['pending', 'delayed', 'reserved'],
 
-    'prune_after' => 24,
+    'queue_size_card_id' => 'queue_size',
 
     // Add queues to monitor
     'queues' => ['default', 'high'],
