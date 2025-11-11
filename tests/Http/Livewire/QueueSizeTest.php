@@ -74,6 +74,71 @@ class QueueSizeTest extends TestCase
         $this->assertEquals($exp, $res[0]);
     }
 
+    public function testRenderQueueFilter()
+    {
+        $id = config('pulse-ext.queue_size_card_id');
+        config(['pulse-ext.queues' => ['hello:world', 'test:hello']]);
+
+        $r1 = ['hello:world', 'pending', $id, 10, now()];
+        $r2 = ['world:test', 'delayed', $id, 9, now()];
+        $r3 = ['test:hello', 'reserved', $id, 8, now()];
+
+        $this->record($r1);
+        $this->record($r2);
+        $this->record($r3);
+
+        $controller = new QueueSize();
+        $data = $controller->render()->getData();
+
+        $this->assertCount(3, $data);
+        $this->assertIsFloat($data['time']);
+        $this->assertIsString($data['runAt']);
+        $this->assertCount(2, $data['queues']);
+        $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
+        $exp = [
+            [
+                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
+            ],
+            [
+                $r3[1] => [$this->getDate($r3[4]) => $r3[3]]
+            ]
+        ];
+        $this->assertEquals($exp, $data['queues']->values()->toArray());
+    }
+
+    public function testRenderQueueStatusFilter()
+    {
+        $id = config('pulse-ext.queue_size_card_id');
+        config(['pulse-ext.queues' => ['hello:world', 'world:test', 'test:hello']]);
+        config(['pulse-ext.queue_status' => ['pending', 'delayed']]);
+
+        $r1 = ['hello:world', 'pending', $id, 10, now()];
+        $r2 = ['world:test', 'delayed', $id, 9, now()];
+        $r3 = ['test:hello', 'reserved', $id, 8, now()];
+
+        $this->record($r1);
+        $this->record($r2);
+        $this->record($r3);
+
+        $controller = new QueueSize();
+        $data = $controller->render()->getData();
+
+        $this->assertCount(3, $data);
+        $this->assertIsFloat($data['time']);
+        $this->assertIsString($data['runAt']);
+        $this->assertCount(2, $data['queues']);
+        $this->assertEquals([$r1[0], $r2[0]], $data['queues']->keys()->toArray());
+        $exp = [
+            [
+                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
+            ],
+            [
+                $r2[1] => [$this->getDate($r2[4]) => $r2[3]]
+            ]
+        ];
+        $this->assertEquals($exp, $data['queues']->values()->toArray());
+    }
+
     public function record($values)
     {
         list($queue, $status, $key, $value, $timestamp) = $values;

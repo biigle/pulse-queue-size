@@ -17,6 +17,10 @@ class QueueSize extends Card
         [$queues, $time, $runAt] = $this->remember(
             function () use ($tz) {
                 $queues = collect();
+                $getArrayString = fn($a) => "ARRAY['" . implode("','", $a) . "']";
+                $queueIDs = $getArrayString(config('pulse-ext.queues'));
+                $states = $getArrayString(config('pulse-ext.queue_status'));
+
                 $query = DB::table('pulse_entries')
                     ->where('key', '=', config('pulse-ext.queue_size_card_id'))
                     ->where(
@@ -24,6 +28,8 @@ class QueueSize extends Card
                         '>=',
                         Carbon::now()->subHours($this->periodAsInterval()->hours)->timestamp
                     )
+                    ->whereRaw("type ~ ANY($queueIDs)") // filter queue
+                    ->whereRaw("type ~ ANY($states)") // filter queue status
                     ->select('type', 'value', 'timestamp')
                     ->orderBy('id');
 
