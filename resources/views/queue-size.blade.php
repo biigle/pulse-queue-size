@@ -44,6 +44,7 @@
                             <div wire:ignore class="h-14" x-data="queueSizeChart({
                                                 queue: '{{ $queue }}',
                                                 readings: @js($readings),
+                                                states: @js($states)
                                             })">
                                 <canvas x-ref="canvas-{{ $queue }}"
                                     class="ring-1 ring-gray-900/5 dark:ring-gray-100/10 bg-gray-50 dark:bg-gray-800 rounded-md shadow-sm"></canvas>
@@ -61,10 +62,10 @@
     window.charts = []
     Alpine.store('pulse', {
         colors: {},
-        createColorset(queues) {
+        createColorset(states) {
             let colors = {};
-            let s = 360 / Object.keys(queues).length;
-            Object.keys(queues).forEach((q, i) => {
+            let s = 360 / states.length;
+            states.forEach((q, i) => {
                 colors[q] = "hsl(" + s * i + ", 100%, 75%)";
             });
             this.colors = colors;
@@ -163,8 +164,8 @@
             return Math.max(...values.flat()) + 1
         },
         createDataset(readings) {
-            let states = Object.keys(readings);
-            let color = this.$store.pulse.createColorset(readings);
+            let states = config.states;
+            let color = this.$store.pulse.createColorset(states);
 
             let datasets = [];
             states.forEach(function (s, i) {

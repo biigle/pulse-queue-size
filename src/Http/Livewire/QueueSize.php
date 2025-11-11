@@ -66,6 +66,7 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
+            'states' => config('pulse-ext.queue_status')
         ]);
     }
 }
