@@ -19,45 +19,47 @@ class QueueSizeTest extends TestCase
         $recorder = new QueueSize;
         $value = '[{"pending":1,"delayed":2,"reserved":3}]';
 
+        $getQueueID = fn($q, $s) => "$defaultConnection:$q$$s";
+
         Artisan::shouldReceive('call')->twice();
         Artisan::shouldReceive('output')->twice()->andReturnValues([$value, $value]);
 
         $queue = 'default';
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$pending', $id, 1);
-
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$delayed', $id, 2);
-
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$reserved', $id, 3);
-
         config(['pulse-ext.queues' => [$queue]]);
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'pending'), $id, 1);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'delayed'), $id, 2);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'reserved'), $id, 3);
+
         $recorder->record();
 
         $queue = 'high';
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$pending', $id, 1);
-
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$delayed', $id, 2);
-
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($defaultConnection . ':' . $queue . '$reserved', $id, 3);
-
         config(['pulse-ext.queues' => [$queue]]);
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'pending'), $id, 1);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'delayed'), $id, 2);
+
+        Pulse::shouldReceive('record')
+            ->once()
+            ->ordered()
+            ->with($getQueueID($queue, 'reserved'), $id, 3);
+
         Carbon::setTestNow(now()->addSeconds(config('pulse-ext.record_interval')));
         $recorder->record();
 
