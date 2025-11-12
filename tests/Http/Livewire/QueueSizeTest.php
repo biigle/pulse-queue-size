@@ -12,6 +12,7 @@ class QueueSizeTest extends TestCase
     public function testRender()
     {
         $id = config('pulse-ext.queue_size_card_id');
+        config(['pulse-ext.queues' => ['hello:world', 'world:test']]);
 
         $r1 = ['hello:world', 'pending', $id, 10, now()];
         $r2 = ['hello:world', 'delayed', $id, 9, now()->addSeconds(60)];
@@ -24,7 +25,8 @@ class QueueSizeTest extends TestCase
         $controller = new QueueSize();
         $data = $controller->render()->getData();
 
-        $this->assertCount(3, $data);
+        $this->assertCount(4, $data);
+        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
@@ -45,6 +47,7 @@ class QueueSizeTest extends TestCase
     {
         $periodHour = 6;
         $id = config('pulse-ext.queue_size_card_id');
+        config(['pulse-ext.queues' => ['test:test', 'world:world']]);
 
         $r1 = ['test:test', 'pending', $id, 10, now()];
         $r2 = ['test:test', 'pending', $id, 9, now()->subHours($periodHour)];
@@ -59,7 +62,8 @@ class QueueSizeTest extends TestCase
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
 
-        $this->assertCount(3, $data);
+        $this->assertCount(4, $data);
+        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(1, $data['queues']);
@@ -90,7 +94,8 @@ class QueueSizeTest extends TestCase
         $controller = new QueueSize();
         $data = $controller->render()->getData();
 
-        $this->assertCount(3, $data);
+        $this->assertCount(4, $data);
+        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
@@ -123,7 +128,8 @@ class QueueSizeTest extends TestCase
         $controller = new QueueSize();
         $data = $controller->render()->getData();
 
-        $this->assertCount(3, $data);
+        $this->assertCount(4, $data);
+        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
