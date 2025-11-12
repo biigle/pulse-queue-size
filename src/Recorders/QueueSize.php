@@ -15,7 +15,7 @@ class QueueSize
     /**
      * Create a new recorder instance.
      *
-     * @param string $key Cache key for lock
+     * @param string $key Cache key for the cache lock
      *
      */
     public function __construct($key = 'queue_size')
@@ -24,14 +24,14 @@ class QueueSize
     }
 
     /**
-     * Key to save update timestamps in cache
+     * Key to save the update timestamps in the cache
      *
      * @var string
      */
     protected $lastUpdatedKey = 'queue_size_updated_at';
 
     /**
-     * Key of cache lock that can be acquired
+     * Key of the cache lock that can be acquired
      *
      * @var string
      */
@@ -59,7 +59,7 @@ class QueueSize
             $interval = config('pulse-ext.record_interval');
             $lastUpdate = Cache::get($this->lastUpdatedKey);
 
-            // Record queue sizes
+            // Record the queue sizes
             if ($lastUpdate === null || $lastUpdate->addSeconds($interval)->isNowOrPast()) {
                 Cache::put($this->lastUpdatedKey, now());
                 $status = config('pulse-ext.queue_status');
