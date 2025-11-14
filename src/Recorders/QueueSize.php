@@ -3,39 +3,15 @@
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
 
+use Laravel\Pulse\Events\IsolatedBeat;
 use Laravel\Pulse\Facades\Pulse;
-use Laravel\Pulse\Events\SharedBeat;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Laravel\Pulse\Recorders\Concerns\Throttling;
 
 
 class QueueSize
 {
-
-    /**
-     * Create a new recorder instance.
-     *
-     * @param string $key Cache key for the cache lock
-     *
-     */
-    public function __construct($key = 'queue_size')
-    {
-        $this->lockKey = $key;
-    }
-
-    /**
-     * Key to save the update timestamps in the cache
-     *
-     * @var string
-     */
-    protected $lastUpdatedKey = 'queue_size_updated_at';
-
-    /**
-     * Key of the cache lock that can be acquired
-     *
-     * @var string
-     */
-    protected $lockKey;
+    use Throttling;
 
     /**
      * The events to listen for.
@@ -43,45 +19,36 @@ class QueueSize
      * @var list<class-string>
      */
     public array $listen = [
-        SharedBeat::class
+        IsolatedBeat::class
     ];
 
     /**
      * Record the job.
      */
-    public function record(): void
+    public function record(IsolatedBeat $event): void
     {
-        $lock = Cache::lock($this->lockKey, 60);
+        // Default: 60 seconds
+        $interval = config('pulse-ext.record_interval');
 
-        // Ensures only a single machine is executing the code
-        if ($lock->get()) {
-            // Default: 60 seconds
-            $interval = config('pulse-ext.record_interval');
-            $lastUpdate = Cache::get($this->lastUpdatedKey);
+        // Record the queue sizes
+        $this->throttle($interval, $event, function () {
+            $status = config('pulse-ext.queue_status');
+            $id = config('pulse-ext.queue_size_card_id');
+            $queues = config('pulse-ext.queues');
+            $defaultConnection = config('queue.default');
 
-            // Record the queue sizes
-            if ($lastUpdate === null || $lastUpdate->addSeconds($interval)->isNowOrPast()) {
-                Cache::put($this->lastUpdatedKey, now());
-                $status = config('pulse-ext.queue_status');
-                $id = config('pulse-ext.queue_size_card_id');
-                $queues = config('pulse-ext.queues');
-                $defaultConnection = config('queue.default');
+            foreach ($queues as $queue) {
+                if (!str_contains($queue, ":")) {
+                    $queue = "$defaultConnection:$queue";
+                }
 
-                foreach ($queues as $queue) {
-                    if (!str_contains($queue, ":")) {
-                        $queue = "$defaultConnection:$queue";
-                    }
+                Artisan::call("queue:monitor $queue --json");
+                $output = json_decode(Artisan::output(), true)[0];
 
-                    Artisan::call("queue:monitor $queue --json");
-                    $output = json_decode(Artisan::output(), true)[0];
-
-                    foreach ($status as $state) {
-                        Pulse::record($queue . "$$state", $id, $output[$state]);
-                    }
+                foreach ($status as $state) {
+                    Pulse::record($queue . "$$state", $id, $output[$state]);
                 }
             }
-
-            $lock->release();
-        }
+        });
     }
 }
