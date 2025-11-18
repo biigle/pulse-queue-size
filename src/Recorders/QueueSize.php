@@ -3,15 +3,12 @@
 namespace Biigle\PulseQueueSizeCard\Recorders;
 
 
-use Laravel\Pulse\Events\IsolatedBeat;
 use Laravel\Pulse\Facades\Pulse;
+use Laravel\Pulse\Events\IsolatedBeat;
 use Illuminate\Support\Facades\Artisan;
-use Laravel\Pulse\Recorders\Concerns\Throttling;
-
 
 class QueueSize
 {
-    use Throttling;
 
     /**
      * The events to listen for.
@@ -31,7 +28,7 @@ class QueueSize
         $interval = config('pulse-ext.record_interval');
 
         // Record the queue sizes
-        $this->throttle($interval, $event, function () {
+        if ($event->time->second % $interval === 0) {
             $status = config('pulse-ext.queue_status');
             $id = config('pulse-ext.queue_size_card_id');
             $queues = config('pulse-ext.queues');
@@ -46,9 +43,9 @@ class QueueSize
                 $output = json_decode(Artisan::output(), true)[0];
 
                 foreach ($status as $state) {
-                    Pulse::record($queue . "$$state", $id, $output[$state]);
+                    Pulse::record($queue . "$$state", $id, $output[$state], $event->time);
                 }
             }
-        });
+        }
     }
 }

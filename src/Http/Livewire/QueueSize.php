@@ -3,6 +3,7 @@
 namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 
 use Livewire\Livewire;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
@@ -12,21 +13,20 @@ class QueueSize extends Card
 {
     public function render()
     {
-        $tz = config('app.timezone');
-
         [$queues, $time, $runAt] = $this->remember(
-            function () use ($tz) {
+            function () {
                 $queues = collect();
                 $getArrayString = fn($a) => "ARRAY['" . implode("','", $a) . "']";
                 $queueIDs = $getArrayString(config('pulse-ext.queues'));
                 $states = $getArrayString(config('pulse-ext.queue_status'));
+                $interval = $this->periodAsInterval()->hours;
 
                 $query = DB::table('pulse_entries')
                     ->where('key', '=', config('pulse-ext.queue_size_card_id'))
                     ->where(
                         'timestamp',
                         '>=',
-                        Carbon::now()->subHours($this->periodAsInterval()->hours)->timestamp
+                        Carbon::now()->subHours($interval)->timestamp
                     )
                     ->whereRaw("type ~ ANY($queueIDs)") // filter queue
                     ->whereRaw("type ~ ANY($states)") // filter queue status
@@ -34,7 +34,8 @@ class QueueSize extends Card
                     ->orderBy('id');
 
                 foreach ($query->lazy() as $queue) {
-                    $date = Carbon::createFromTimestamp($queue->timestamp, $tz)->toDateTimeString();
+                    $date = Carbon::createFromTimestamp($queue->timestamp);
+                    $currentDate = fn() => $date->copy();
                     list($queueID, $status) = explode("$", $queue->type);
 
                     if (!isset($queues[$queueID])) {
@@ -42,10 +43,24 @@ class QueueSize extends Card
                     }
 
                     if (!isset($queues[$queueID][$status])) {
-                        $queues[$queueID][$status] = collect();
+                        // Fill collection with 60 values beginning at interval start to maintain x-axis scaling
+                        $past = collect(CarbonPeriod::create(
+                            $currentDate()->subHours($interval),
+                            "$interval minutes",
+                            $currentDate()->subMinute()
+                        ))->mapWithKeys(fn($time) => [$time->toDateTimeString() => 0]);
+                        $queues[$queueID][$status] = $past;
                     }
 
-                    $queues[$queueID][$status][$date] = $queue->value;
+                    $lastKey = $queues[$queueID][$status]->keys()->last();
+                    $lastDate = Carbon::createFromTimeString($lastKey, 'UTC');
+                    $lastDate->addMinutes($interval);
+
+                    if ($lastDate->isBefore($date) || $lastDate->is($date)) {
+                        $queues[$queueID][$status][$date->toDateTimeString()] = $queue->value;
+                        // Allow at most 60 entries like other Pulse controllers
+                        $queues[$queueID][$status]->shift();
+                    }
                 }
 
                 return $queues;
@@ -66,7 +81,7 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'states' => config('pulse-ext.queue_status')
+            'sampleRate' => config('pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class . '.sample_rate')
         ]);
     }
 }
