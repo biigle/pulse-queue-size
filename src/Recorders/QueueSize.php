@@ -25,7 +25,8 @@ class QueueSize
     public function record(IsolatedBeat $event): void
     {
         // Default: 60 seconds
-        $interval = config('pulse-ext.record_interval');
+        $config = "pulse.recorders.".$this::class;
+        $interval = config("$config.record_interval");
 
         // Record the queue sizes
         if ($event->time->second % $interval === 0) {

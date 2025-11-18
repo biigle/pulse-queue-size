@@ -15,7 +15,7 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/config/pulse-ext.php', 'pulse-ext');
+        //
     }
 
     /**
@@ -27,7 +27,6 @@ class PulseQueueSizeCardServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views', "pulse-queue-size-card");
 
-        $this->publishes([__DIR__ . '/config/pulse-ext.php' => config_path('pulse-ext.php')]);
     }
 
 }

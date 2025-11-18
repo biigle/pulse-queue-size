@@ -12,24 +12,23 @@ use Illuminate\Support\Facades\DB;
 class QueueSize extends Card
 {
     public function render()
-    {
+    {        
+        $config = 'pulse.recorders.'. \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
         [$queues, $time, $runAt] = $this->remember(
-            function () {
+            function () use ($config) {
                 $queues = collect();
                 $getArrayString = fn($a) => "ARRAY['" . implode("','", $a) . "']";
                 $queueIDs = $getArrayString(config('pulse-ext.queues'));
-                $states = $getArrayString(config('pulse-ext.queue_status'));
                 $interval = $this->periodAsInterval()->hours;
 
                 $query = DB::table('pulse_entries')
-                    ->where('key', '=', config('pulse-ext.queue_size_card_id'))
+                    ->where('key', '=', config("$config.id"))
                     ->where(
                         'timestamp',
                         '>=',
                         Carbon::now()->subHours($interval)->timestamp
                     )
                     ->whereRaw("type ~ ANY($queueIDs)") // filter queue
-                    ->whereRaw("type ~ ANY($states)") // filter queue status
                     ->select('type', 'value', 'timestamp')
                     ->orderBy('id');
 
@@ -81,7 +80,7 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'sampleRate' => config('pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class . '.sample_rate')
+            'sampleRate' => config($config . '.sample_rate')
         ]);
     }
 }
