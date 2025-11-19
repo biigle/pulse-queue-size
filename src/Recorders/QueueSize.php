@@ -30,8 +30,8 @@ class QueueSize
 
         // Record the queue sizes
         if ($event->time->second % $interval === 0) {
-            $status = config("$config.queue_status");
-            $id = config("$config.queue_size_card_id");
+            $states = ['pending', 'delayed', 'reserved'];
+            $id = config("$config.id");
             $queues = config("$config.queues");
             $defaultConnection = config('queue.default');
 
@@ -43,7 +43,7 @@ class QueueSize
                 Artisan::call("queue:monitor $queue --json");
                 $output = json_decode(Artisan::output(), true)[0];
 
-                foreach ($status as $state) {
+                foreach ($states as $state) {
                     Pulse::record($queue . "$$state", $id, $output[$state], $event->time);
                 }
             }
