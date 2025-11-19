@@ -17,6 +17,7 @@ class QueueSizeTest extends TestCase
     public function testRecorder()
     {
         $id = config($this->config . ".id");
+        config([$this->config . ".queues" => ['default']]);
         $defaultConnection = config('queue.default');
         $recorder = new QueueSize;
 
