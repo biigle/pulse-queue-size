@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\DB;
 class QueueSize extends Card
 {
     public function render()
-    {        
-        $config = 'pulse.recorders.'. \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
+    {
+        $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
         [$queues, $time, $runAt] = $this->remember(
             function () use ($config) {
                 $queues = collect();
                 $getArrayString = fn($a) => "ARRAY['" . implode("','", $a) . "']";
-                $queueIDs = $getArrayString(config('pulse-ext.queues'));
+                $queueIDs = $getArrayString(config("$config.queues"));
                 $interval = $this->periodAsInterval()->hours;
 
                 $query = DB::table('pulse_entries')

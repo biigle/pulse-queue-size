@@ -30,9 +30,9 @@ class QueueSize
 
         // Record the queue sizes
         if ($event->time->second % $interval === 0) {
-            $status = config('pulse-ext.queue_status');
-            $id = config('pulse-ext.queue_size_card_id');
-            $queues = config('pulse-ext.queues');
+            $status = config("$config.queue_status");
+            $id = config("$config.queue_size_card_id");
+            $queues = config("$config.queues");
             $defaultConnection = config('queue.default');
 
             foreach ($queues as $queue) {
