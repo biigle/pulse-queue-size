@@ -1,3 +1,4 @@
+@use('Illuminate\Support\Str')
 <x-pulse::card title="Queue Size" :cols="$cols">
     <x-pulse::card-header name="Queue Sizes"
         x-bind:title="`Time: {{ number_format($time) }}ms; Run at: ${formatDate('{{ $runAt }}')};`"
@@ -35,10 +36,11 @@
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300">
-                                {!! $queueID !!}
-                            </h3>
-                            <h3 class="text-gray-600">
-                                {!! '(' . $connection . ')' !!}
+                                @if ($showConnection)
+                                    {{ $queue }}
+                                @else
+                                    {{ $queueID }}
+                                @endif
                             </h3>
                         </div>
 
@@ -148,7 +150,7 @@
                 ))
 
             Livewire.on('queues-sizes-chart-update', ({ queues }) => {
-                let queue = Object.keys(queues)[0];
+                let queue = config.queue;
                 let chart = window.charts.filter((c) => c.canvas.getAttribute('x-ref').includes(queue))[0];
 
                 if (chart === undefined) {

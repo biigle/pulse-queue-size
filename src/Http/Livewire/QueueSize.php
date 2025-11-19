@@ -4,6 +4,7 @@ namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 
 use Livewire\Livewire;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
 use Illuminate\Support\Facades\DB;
@@ -71,16 +72,15 @@ class QueueSize extends Card
         }
 
         if (Livewire::isLivewireRequest()) {
-            foreach ($queues->keys() as $key) {
-                $this->dispatch('queues-sizes-chart-update', queues: [$key => $queues[$key]]);
-            }
+            $this->dispatch('queues-sizes-chart-update', queues: $queues);
         }
 
         return view('pulse-queue-size-card::queue-size', [
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'sampleRate' => config($config . '.sample_rate')
+            'sampleRate' => config($config . '.sample_rate'),
+            'showConnection' => $queues->keys()->map(fn ($queue) => Str::before($queue, ':'))->unique()->count() > 1,
         ]);
     }
 }
