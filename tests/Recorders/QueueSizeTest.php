@@ -2,9 +2,9 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 use Laravel\Pulse\Facades\Pulse;
-use Illuminate\Support\Facades\Cache;
+use Laravel\Pulse\Events\IsolatedBeat;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\TestCase;
 use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
@@ -12,74 +12,39 @@ use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
 
 class QueueSizeTest extends TestCase
 {
+    private $config = 'pulse.recorders.' . QueueSize::class;
+
     public function testRecorder()
     {
-        $id = config('pulse-ext.queue_size_card_id');
+        $id = config($this->config . ".id");
         $defaultConnection = config('queue.default');
         $recorder = new QueueSize;
+
         $value = '[{"pending":1,"delayed":2,"reserved":3}]';
 
         $getQueueID = fn($q, $s) => "$defaultConnection:$q$$s";
 
-        Artisan::shouldReceive('call')->twice();
-        Artisan::shouldReceive('output')->twice()->andReturnValues([$value, $value]);
+        Artisan::shouldReceive('call')->once();
+        Artisan::shouldReceive('output')->once()->andReturns($value);
 
-        $queue = 'default';
-        config(['pulse-ext.queues' => [$queue]]);
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($getQueueID($queue, 'pending'), $id, 1);
+        $eventTime = CarbonImmutable::now()->startOfMinute();
+        $recorder = new QueueSize;
 
         Pulse::shouldReceive('record')
-            ->once()
+            ->with($getQueueID('default', 'pending'), $id, 1, $eventTime)
             ->ordered()
-            ->with($getQueueID($queue, 'delayed'), $id, 2);
+            ->once();
 
         Pulse::shouldReceive('record')
-            ->once()
+            ->with($getQueueID('default', 'delayed'), $id, 2, $eventTime)
             ->ordered()
-            ->with($getQueueID($queue, 'reserved'), $id, 3);
-
-        $recorder->record();
-
-        $queue = 'high';
-        config(['pulse-ext.queues' => [$queue]]);
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($getQueueID($queue, 'pending'), $id, 1);
+            ->once();
 
         Pulse::shouldReceive('record')
-            ->once()
+            ->with($getQueueID('default', 'reserved'), $id, 3, $eventTime)
             ->ordered()
-            ->with($getQueueID($queue, 'delayed'), $id, 2);
+            ->once();
 
-        Pulse::shouldReceive('record')
-            ->once()
-            ->ordered()
-            ->with($getQueueID($queue, 'reserved'), $id, 3);
-
-        Carbon::setTestNow(now()->addSeconds(config('pulse-ext.record_interval')));
-        $recorder->record();
-
-        // should be ignored since it is too early to record
-        Pulse::shouldReceive('record')->never();
-        $recorder->record();
-    }
-
-    public function testRecorderLocked()
-    {
-        $lockKey = "test";
-        $recorder = new QueueSize($lockKey);
-
-        Pulse::shouldReceive('record')->never();
-
-        // Simulate another machine acquiring the lock
-        $lock = Cache::lock($lockKey);
-        $lock->get();
-
-        $recorder->record();
-        $lock->release();
+        $recorder->record(new IsolatedBeat($eventTime));
     }
 }

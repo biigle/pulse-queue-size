@@ -4,88 +4,92 @@ namespace Biigle\PulseQueueSizeCard\Tests\Http\Livewire;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Testing\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
-use TestCase;
 
 class QueueSizeTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
+
     public function testRender()
     {
-        $id = config('pulse-ext.queue_size_card_id');
-        config(['pulse-ext.queues' => ['hello:world', 'world:test']]);
+        $id = config($this->config . ".id");
+        config([$this->config . ".queues" => ['hello:world', 'world:test']]);
 
         $r1 = ['hello:world', 'pending', $id, 10, now()];
         $r2 = ['hello:world', 'delayed', $id, 9, now()->addSeconds(60)];
         $r3 = ['world:test', 'reserved', $id, 8, now()];
+        $records = [$r1, $r2, $r3];
 
         $this->record($r1);
-        $this->record($r2);
         $this->record($r3);
+        $this->record($r2);
 
         $controller = new QueueSize();
         $data = $controller->render()->getData();
 
         $this->assertCount(4, $data);
-        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
+        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
         $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
-        $exp = [
-            [
-                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
-                $r2[1] => [$this->getDate($r2[4]) => $r2[3]]
-            ],
-            [
-                $r3[1] => [$this->getDate($r3[4]) => $r3[3]]
-            ]
-        ];
-        $this->assertEquals($exp, $data['queues']->values()->toArray());
+        $this->assertCount(3, $data['queues']->flatten(1));
+        foreach ($data['queues']->flatten(1) as $idx => $queue) {
+            $this->assertCount(60, $queue);
+            $date = $this->getDate($records[$idx][4]);
+            $this->assertEquals($records[$idx][3], $queue[$date]);
+            $this->assertCount(59, $queue->filter(fn($v, $k) => $v === 0 && is_string($k)));
+        }
+
     }
 
     public function testRenderPeriod()
     {
         $periodHour = 6;
-        $id = config('pulse-ext.queue_size_card_id');
-        config(['pulse-ext.queues' => ['test:test', 'world:world']]);
+        $id = config($this->config . ".id");
+        config([$this->config . ".queues" => ['test:test', 'world:world']]);
 
         $r1 = ['test:test', 'pending', $id, 10, now()];
-        $r2 = ['test:test', 'pending', $id, 9, now()->subHours($periodHour)];
+        $r2 = ['test:test', 'pending', $id, 9, now()->subHours($periodHour)->addMinutes($periodHour)];
         // should be ignored
-        $r3 = ['hello:world', 'pending', $id, 8, now()->subHours($periodHour)->subMinute()];
+        $r3 = ['hello:world', 'pending', $id, 8, now()->subHours($periodHour)];
+        $records = [$r1, $r2];
 
-        $this->record($r1);
-        $this->record($r2);
         $this->record($r3);
+        $this->record($r2);
+        $this->record($r1);
 
         $controller = new QueueSize();
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
+        $queue = $data['queues']->flatten(1);
 
         $this->assertCount(4, $data);
-        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
+        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
         $this->assertCount(1, $data['queues']);
         $this->assertEquals($r1[0], $data['queues']->keys()->first());
-        $exp = [
-            $r1[1] => [
-                $this->getDate($r1[4]) => $r1[3],
-                $this->getDate($r2[4]) => $r2[3]
-            ]
-        ];
-        $res = $data['queues']->values()->toArray();
-        $this->assertEquals($exp, $res[0]);
+        $this->assertCount(1, $queue);
+        $this->assertCount(60, $queue[0]);
+        $this->assertCount(58, $queue[0]->filter(fn($v, $k) => $v === 0 && is_string($k)));
+        $this->assertEquals($r1[3], $queue[0][$this->getDate($r1[4])]);
+        $this->assertEquals($r2[3], $queue[0][$this->getDate($r2[4])]);
     }
 
     public function testRenderQueueFilter()
     {
-        $id = config('pulse-ext.queue_size_card_id');
-        config(['pulse-ext.queues' => ['hello:world', 'test:hello']]);
+        $id = config($this->config . ".id");
+        config([$this->config . ".queues" => ['con:q1', 'con:q3']]);
 
-        $r1 = ['hello:world', 'pending', $id, 10, now()];
-        $r2 = ['world:test', 'delayed', $id, 9, now()];
-        $r3 = ['test:hello', 'reserved', $id, 8, now()];
+        $r1 = ['con:q1', 'pending', $id, 10, now()];
+        $r2 = ['con:q2', 'delayed', $id, 9, now()];
+        $r3 = ['con:q3', 'reserved', $id, 8, now()];
+        $records = [$r1, $r3];
 
         $this->record($r1);
         $this->record($r2);
@@ -95,54 +99,17 @@ class QueueSizeTest extends TestCase
         $data = $controller->render()->getData();
 
         $this->assertCount(4, $data);
-        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
+        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertCount(2, $data['queues']);
         $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
-        $exp = [
-            [
-                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
-            ],
-            [
-                $r3[1] => [$this->getDate($r3[4]) => $r3[3]]
-            ]
-        ];
-        $this->assertEquals($exp, $data['queues']->values()->toArray());
-    }
-
-    public function testRenderQueueStatusFilter()
-    {
-        $id = config('pulse-ext.queue_size_card_id');
-        config(['pulse-ext.queues' => ['hello:world', 'world:test', 'test:hello']]);
-        config(['pulse-ext.queue_status' => ['pending', 'delayed']]);
-
-        $r1 = ['hello:world', 'pending', $id, 10, now()];
-        $r2 = ['world:test', 'delayed', $id, 9, now()];
-        $r3 = ['test:hello', 'reserved', $id, 8, now()];
-
-        $this->record($r1);
-        $this->record($r2);
-        $this->record($r3);
-
-        $controller = new QueueSize();
-        $data = $controller->render()->getData();
-
-        $this->assertCount(4, $data);
-        $this->assertSame(config('pulse-ext.queue_status'), $data['states']);
-        $this->assertIsFloat($data['time']);
-        $this->assertIsString($data['runAt']);
-        $this->assertCount(2, $data['queues']);
-        $this->assertEquals([$r1[0], $r2[0]], $data['queues']->keys()->toArray());
-        $exp = [
-            [
-                $r1[1] => [$this->getDate($r1[4]) => $r1[3]],
-            ],
-            [
-                $r2[1] => [$this->getDate($r2[4]) => $r2[3]]
-            ]
-        ];
-        $this->assertEquals($exp, $data['queues']->values()->toArray());
+        foreach ($data['queues']->flatten(1) as $idx => $queue) {
+            $this->assertCount(60, $queue);
+            $date = $this->getDate($records[$idx][4]);
+            $this->assertEquals($records[$idx][3], $queue[$date]);
+            $this->assertCount(59, $queue->filter(fn($v, $k) => $v === 0 && is_string($k)));
+        }
     }
 
     public function record($values)
@@ -153,16 +120,14 @@ class QueueSizeTest extends TestCase
             'type' => $type,
             'key' => $key,
             'value' => $value,
-            'timestamp' => $timestamp->timestamp
+            'timestamp' => $timestamp->timezone('UTC')->timestamp
         ]);
     }
 
     public function getDate($d)
     {
-        $tz = config('app.timezone');
-
         return Carbon::parse($d)
-            ->setTimezone($tz)
+            ->setTimezone('UTC')
             ->toDateTimeString();
     }
 }
