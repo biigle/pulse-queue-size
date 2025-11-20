@@ -25,13 +25,12 @@ class QueueSize
     public function record(IsolatedBeat $event): void
     {
         // Default: 60 seconds
-        $config = "pulse.recorders.".$this::class;
+        $config = "pulse.recorders." . $this::class;
         $interval = config("$config.record_interval");
 
         // Record the queue sizes
         if ($event->time->second % $interval === 0) {
             $states = ['pending', 'delayed', 'reserved'];
-            $id = config("$config.id");
             $queues = config("$config.queues");
             $defaultConnection = config('queue.default');
 
@@ -44,7 +43,7 @@ class QueueSize
                 $output = json_decode(Artisan::output(), true)[0];
 
                 foreach ($states as $state) {
-                    Pulse::record($queue . "$$state", $id, $output[$state], $event->time);
+                    Pulse::record($state, $queue, $output[$state], $event->time)->avg();
                 }
             }
         }

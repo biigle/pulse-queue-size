@@ -3,11 +3,8 @@
 namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 
 use Livewire\Livewire;
-use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
 use Laravel\Pulse\Livewire\Card;
-use Illuminate\Support\Facades\DB;
 
 #[Lazy]
 class QueueSize extends Card
@@ -16,55 +13,8 @@ class QueueSize extends Card
     {
         $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
         [$queues, $time, $runAt] = $this->remember(
-            function () use ($config) {
-                $queues = collect();
-                $getArrayString = fn($a) => "ARRAY['" . implode("','", $a) . "']";
-                $queueIDs = $getArrayString(config("$config.queues"));
-                $interval = $this->periodAsInterval()->hours;
-
-                $query = DB::table('pulse_entries')
-                    ->where('key', '=', config("$config.id"))
-                    ->where(
-                        'timestamp',
-                        '>=',
-                        Carbon::now()->subHours($interval)->timestamp
-                    )
-                    ->whereRaw("type ~ ANY($queueIDs)") // filter queue
-                    ->select('type', 'value', 'timestamp')
-                    ->orderBy('id');
-
-                foreach ($query->lazy() as $queue) {
-                    $date = Carbon::createFromTimestamp($queue->timestamp);
-                    $currentDate = fn() => $date->copy();
-                    list($queueID, $status) = explode("$", $queue->type);
-
-                    if (!isset($queues[$queueID])) {
-                        $queues[$queueID] = collect();
-                    }
-
-                    if (!isset($queues[$queueID][$status])) {
-                        // Fill collection with 60 values beginning at interval start to maintain x-axis scaling
-                        $past = collect(CarbonPeriod::create(
-                            $currentDate()->subHours($interval),
-                            "$interval minutes",
-                            $currentDate()->subMinute()
-                        ))->mapWithKeys(fn($time) => [$time->toDateTimeString() => 0]);
-                        $queues[$queueID][$status] = $past;
-                    }
-
-                    $lastKey = $queues[$queueID][$status]->keys()->last();
-                    $lastDate = Carbon::createFromTimeString($lastKey, 'UTC');
-                    $lastDate->addMinutes($interval);
-
-                    if ($lastDate->isBefore($date) || $lastDate->is($date)) {
-                        $queues[$queueID][$status][$date->toDateTimeString()] = $queue->value;
-                        // Allow at most 60 entries like other Pulse controllers
-                        $queues[$queueID][$status]->shift();
-                    }
-                }
-
-                return $queues;
-            }
+            fn() =>
+            $this->graph(['pending', 'delayed', 'reserved'], 'avg')
         );
 
         if (!sizeof($queues)) {
