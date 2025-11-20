@@ -27,6 +27,8 @@ Note: This Laravel package is auto-discovered.
 Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
             'enabled' => env('PULSE_QUEUE_SIZE_ENABLED', true),
             'sample_rate' => env('PULSE_QUEUES_SAMPLE_RATE', 1),
+            'record_interval' => 60, // time interval between records
+            'queues' => ['default'] // queues to monitor
             ],
 ```
 
@@ -35,7 +37,5 @@ Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
 ```
     <livewire:pulse-queue-size-card.queue-size cols="4"/>
 ```
-3. Add the queue names to the queues array in the `config/pulse-ext.php` to monitor their size
 
-
-4. Start Laravel pulse by using the `pulse:check` process.
+3. Start Laravel pulse by using the `pulse:check` process.
