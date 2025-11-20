@@ -3,6 +3,8 @@
 namespace Biigle\PulseQueueSizeCard\Tests\Http\Livewire;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterval;
+use Laravel\Pulse\Facades\Pulse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,20 +18,21 @@ class QueueSizeTest extends TestCase
 
     public function testRender()
     {
-        $id = config($this->config . ".id");
         config([$this->config . ".queues" => ['hello:world', 'world:test']]);
+        $getDate = fn($d) => Carbon::parse($d)
+            ->setTimezone('UTC')
+            ->startOfMinute()
+            ->toDateTimeString();
 
-        $r1 = ['hello:world', 'pending', $id, 10, now()];
-        $r2 = ['hello:world', 'delayed', $id, 9, now()->addSeconds(60)];
-        $r3 = ['world:test', 'reserved', $id, 8, now()];
+        $r1 = ['hello:world', 'pending', 10, now()];
+        $r2 = ['hello:world', 'delayed', 9, now()->addSeconds(60)];
+        $r3 = ['world:test', 'reserved', 8, now()];
         $records = [$r1, $r2, $r3];
-
-        $this->record($r1);
-        $this->record($r3);
-        $this->record($r2);
+        $this->record($records, 1);
 
         $controller = new QueueSize();
         $data = $controller->render()->getData();
+        $queues = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
         $this->assertCount(5, $data);
         $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
@@ -38,36 +41,31 @@ class QueueSizeTest extends TestCase
         $this->assertTrue($data['showConnection']);
         $this->assertCount(2, $data['queues']);
         $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
-        $this->assertCount(3, $data['queues']->flatten(1));
-        foreach ($data['queues']->flatten(1) as $idx => $queue) {
-            $this->assertCount(60, $queue);
-            $date = $this->getDate($records[$idx][4]);
-            $this->assertEquals($records[$idx][3], $queue[$date]);
-            $this->assertCount(59, $queue->filter(fn($v, $k) => $v === 0 && is_string($k)));
+        $this->assertCount(6, $data['queues']->flatten(1));
+        foreach ($queues as $idx => $queue) {
+            $this->assertCount(1, $queue->filter(fn($v, $k) => $v != null));
+            $this->assertEquals($records[$idx][2], $queue[$getDate($records[$idx][3])]);
+            $this->assertCount($queue->count() - 1, $queue
+                ->filter(fn($v, $k) => $v === null && is_string($k)));
         }
-
     }
 
     public function testRenderPeriod()
     {
         $periodHour = 6;
-        $id = config($this->config . ".id");
         config([$this->config . ".queues" => ['test:test', 'world:world']]);
 
-        $r1 = ['test:test', 'pending', $id, 10, now()];
-        $r2 = ['test:test', 'pending', $id, 9, now()->subHours($periodHour)->addMinutes($periodHour)];
+        $r1 = ['test:test', 'pending', 10, now()];
+        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->addMinutes($periodHour)];
         // should be ignored
-        $r3 = ['hello:world', 'pending', $id, 8, now()->subHours($periodHour)];
-        $records = [$r1, $r2];
+        $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)];
 
-        $this->record($r3);
-        $this->record($r2);
-        $this->record($r1);
+        $this->record([$r3, $r2, $r1], $periodHour);
 
         $controller = new QueueSize();
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
-        $queue = $data['queues']->flatten(1);
+        $queue = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
         $this->assertCount(5, $data);
         $this->assertIsFloat($data['time']);
@@ -77,60 +75,29 @@ class QueueSizeTest extends TestCase
         $this->assertCount(1, $data['queues']);
         $this->assertEquals($r1[0], $data['queues']->keys()->first());
         $this->assertCount(1, $queue);
-        $this->assertCount(60, $queue[0]);
-        $this->assertCount(58, $queue[0]->filter(fn($v, $k) => $v === 0 && is_string($k)));
-        $this->assertEquals($r1[3], $queue[0][$this->getDate($r1[4])]);
-        $this->assertEquals($r2[3], $queue[0][$this->getDate($r2[4])]);
+        $this->assertCount(2, $queue[0]->filter(fn($v, $k) => $v != null));
+        $this->assertEquals($r1[2], $queue[0]->last());
+        $this->assertEquals($r2[2], $queue[0]->first());
+        $this->assertCount($queue[0]->count() - 2, $queue[0]
+            ->filter(fn($v, $k) => $v === null && is_string($k)));
     }
 
-    public function testRenderQueueFilter()
+    public function record($records, $period)
     {
-        $id = config($this->config . ".id");
-        config([$this->config . ".queues" => ['con:q1', 'con:q3']]);
+        foreach ($records as $record) {
+            list($queue, $status, $value, $timestamp) = $record;
+            $maxDataPoints = 60;
+            $secondsPerPeriod = (float) ($period * 60 * 60 / $maxDataPoints);
+            $currentBucket = (int) (floor($timestamp->getTimestamp() / $secondsPerPeriod) * $secondsPerPeriod);
 
-        $r1 = ['con:q1', 'pending', $id, 10, now()];
-        $r2 = ['con:q2', 'delayed', $id, 9, now()];
-        $r3 = ['con:q3', 'reserved', $id, 8, now()];
-        $records = [$r1, $r3];
-
-        $this->record($r1);
-        $this->record($r2);
-        $this->record($r3);
-
-        $controller = new QueueSize();
-        $data = $controller->render()->getData();
-
-        $this->assertCount(5, $data);
-        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
-        $this->assertIsFloat($data['time']);
-        $this->assertIsString($data['runAt']);
-        $this->assertFalse($data['showConnection']);
-        $this->assertCount(2, $data['queues']);
-        $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
-        foreach ($data['queues']->flatten(1) as $idx => $queue) {
-            $this->assertCount(60, $queue);
-            $date = $this->getDate($records[$idx][4]);
-            $this->assertEquals($records[$idx][3], $queue[$date]);
-            $this->assertCount(59, $queue->filter(fn($v, $k) => $v === 0 && is_string($k)));
+            DB::table('pulse_aggregates')->insert([
+                'type' => $status,
+                'key' => $queue,
+                'value' => $value,
+                'bucket' => $currentBucket,
+                'aggregate' => 'avg',
+                'period' => $secondsPerPeriod
+            ]);
         }
-    }
-
-    public function record($values)
-    {
-        list($queue, $status, $key, $value, $timestamp) = $values;
-        $type = $queue . '$' . $status;
-        DB::table('pulse_entries')->insert([
-            'type' => $type,
-            'key' => $key,
-            'value' => $value,
-            'timestamp' => $timestamp->timezone('UTC')->timestamp
-        ]);
-    }
-
-    public function getDate($d)
-    {
-        return Carbon::parse($d)
-            ->setTimezone('UTC')
-            ->toDateTimeString();
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Biigle\PulseQueueSizeCard\Tests;
 
+use Mockery;
+use Laravel\Pulse\Entry;
 use Carbon\CarbonImmutable;
 use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Events\IsolatedBeat;
@@ -16,14 +18,12 @@ class QueueSizeTest extends TestCase
 
     public function testRecorder()
     {
-        $id = config($this->config . ".id");
         config([$this->config . ".queues" => ['default']]);
         $defaultConnection = config('queue.default');
+        $queue = "$defaultConnection:default";
         $recorder = new QueueSize;
 
         $value = '[{"pending":1,"delayed":2,"reserved":3}]';
-
-        $getQueueID = fn($q, $s) => "$defaultConnection:$q$$s";
 
         Artisan::shouldReceive('call')->once();
         Artisan::shouldReceive('output')->once()->andReturns($value);
@@ -31,18 +31,24 @@ class QueueSizeTest extends TestCase
         $eventTime = CarbonImmutable::now()->startOfMinute();
         $recorder = new QueueSize;
 
+        $mock = Mockery::mock(Entry::class);
+        $mock->shouldReceive('avg')->times(3);
+
         Pulse::shouldReceive('record')
-            ->with($getQueueID('default', 'pending'), $id, 1, $eventTime)
+            ->with('pending', $queue, 1, $eventTime)
+            ->andReturn($mock)
             ->ordered()
             ->once();
 
         Pulse::shouldReceive('record')
-            ->with($getQueueID('default', 'delayed'), $id, 2, $eventTime)
+            ->with('delayed', $queue, 2, $eventTime)
+            ->andReturn($mock)
             ->ordered()
             ->once();
 
         Pulse::shouldReceive('record')
-            ->with($getQueueID('default', 'reserved'), $id, 3, $eventTime)
+            ->with('reserved', $queue, 3, $eventTime)
+            ->andReturn($mock)
             ->ordered()
             ->once();
 
