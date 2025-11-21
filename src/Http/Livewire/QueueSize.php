@@ -12,8 +12,7 @@ class QueueSize extends Card
     public function render()
     {
         [$queues, $time, $runAt] = $this->remember(
-            fn() =>
-            $this->graph(['pending', 'delayed', 'reserved'], 'sum')
+            fn() => $this->graph(['pending', 'delayed', 'reserved'], 'sum')
         );
 
         if (Livewire::isLivewireRequest()) {
@@ -24,7 +23,7 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'showConnection' => $queues->keys()->map(fn ($queue) => Str::before($queue, ':'))->unique()->count() > 1,
+            'showConnection' => $queues->keys()->map(fn($queue) => Str::before($queue, ':'))->unique()->count() > 1,
         ]);
     }
 }
