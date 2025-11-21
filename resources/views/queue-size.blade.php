@@ -79,17 +79,17 @@
                             {
                                 label: 'Pending',
                                 borderColor: '#9333ea',
-                                data: config.readings.pending,
+                                data: Object.values(config.readings.pending),
                             },
                             {
                                 label: 'Delayed',
                                 borderColor: '#e11d48',
-                                data: config.readings.delayed,
+                                data: Object.values(config.readings.delayed),
                             },
                             {
                                 label: 'Reserved',
                                 borderColor: '#eab308',
-                                data: config.readings.reserved,
+                                data: Object.values(config.readings.reserved),
                             },
                         ]
                     },
@@ -155,9 +155,9 @@
 
                 chart.data.labels = this.labels(queues[queue])
                 chart.options.scales.y.max = this.highest(queues)
-                chart.data.datasets[0].data = queues[queue].pending
-                chart.data.datasets[1].data = queues[queue].delayed
-                chart.data.datasets[2].data = queues[queue].reserved
+                chart.data.datasets[0].data = Object.values(queues[queue].pending);
+                chart.data.datasets[1].data = Object.values(queues[queue].delayed);
+                chart.data.datasets[2].data = Object.values(queues[queue].reserved);
 
                 chart.update();
             })
