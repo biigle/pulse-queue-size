@@ -11,15 +11,10 @@ class QueueSize extends Card
 {
     public function render()
     {
-        $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
         [$queues, $time, $runAt] = $this->remember(
             fn() =>
             $this->graph(['pending', 'delayed', 'reserved'], 'sum')
         );
-
-        if (!sizeof($queues)) {
-            $queues = collect([]);
-        }
 
         if (Livewire::isLivewireRequest()) {
             $this->dispatch('queues-sizes-chart-update', queues: $queues);
