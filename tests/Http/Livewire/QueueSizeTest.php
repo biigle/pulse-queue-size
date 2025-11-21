@@ -44,8 +44,10 @@ class QueueSizeTest extends TestCase
         foreach ($queues as $idx => $queue) {
             $this->assertCount(1, $queue->filter(fn($v, $k) => $v != null));
             $this->assertEquals($records[$idx][2], $queue[$getDate($records[$idx][3])]);
-            $this->assertCount($queue->count() - 1, $queue
-                ->filter(fn($v, $k) => $v === null && is_string($k)));
+            $this->assertCount(
+                $queue->count() - 1,
+                $queue->filter(fn($v, $k) => $v === null)
+            );
         }
     }
 
@@ -76,8 +78,10 @@ class QueueSizeTest extends TestCase
         $this->assertCount(2, $queue[0]->filter(fn($v, $k) => $v != null));
         $this->assertEquals($r1[2], $queue[0]->last());
         $this->assertEquals($r2[2], $queue[0]->first());
-        $this->assertCount($queue[0]->count() - 2, $queue[0]
-            ->filter(fn($v, $k) => $v === null && is_string($k)));
+        $this->assertCount(
+            $queue[0]->count() - 2,
+            $queue[0]->filter(fn($v, $k) => $v === null)
+        );
     }
 
     public function record($records, $period)
