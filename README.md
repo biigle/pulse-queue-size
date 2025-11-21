@@ -1,5 +1,5 @@
 <h1>Pulse Queue Size Card</h1>
-Displays the queue sizes of queues.
+Displays the queue sizes.
 
 <h2>Requirements</h2>
 
@@ -37,4 +37,4 @@ Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
     <livewire:pulse-queue-size-card.queue-size cols="4"/>
 ```
 
-3. Start Laravel pulse by using the `pulse:check` process.
+3. Start Laravel Pulse by running `php artisan pulse:check`.
