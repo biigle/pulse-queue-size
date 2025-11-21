@@ -79,17 +79,17 @@
                             {
                                 label: 'Pending',
                                 borderColor: '#9333ea',
-                                data: this.scale(config.readings.pending),
+                                data: config.readings.pending,
                             },
                             {
                                 label: 'Delayed',
                                 borderColor: '#e11d48',
-                                data: this.scale(config.readings.delayed),
+                                data: config.readings.delayed,
                             },
                             {
                                 label: 'Reserved',
                                 borderColor: '#eab308',
-                                data: this.scale(config.readings.reserved),
+                                data: config.readings.reserved,
                             },
                         ]
                     },
@@ -155,18 +155,15 @@
 
                 chart.data.labels = this.labels(queues[queue])
                 chart.options.scales.y.max = this.highest(queues)
-                chart.data.datasets[0].data = this.scale(queues[queue].pending)
-                chart.data.datasets[1].data = this.scale(queues[queue].delayed)
-                chart.data.datasets[2].data = this.scale(queues[queue].reserved)
+                chart.data.datasets[0].data = queues[queue].pending
+                chart.data.datasets[1].data = queues[queue].delayed
+                chart.data.datasets[2].data = queues[queue].reserved
 
                 chart.update();
             })
         },
         highest(readings) {
             return Math.max(...Object.values(readings).map(dataset => Math.max(...Object.values(dataset))))
-        },
-        scale(data) {
-            return Object.values(data).map(value => value)
         },
         labels(readings) {
             return Object.keys(Object.values(readings)[0]).map(formatDate)
