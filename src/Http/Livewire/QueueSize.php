@@ -29,7 +29,6 @@ class QueueSize extends Card
             'queues' => $queues,
             'time' => $time,
             'runAt' => $runAt,
-            'sampleRate' => config($config . '.sample_rate'),
             'showConnection' => $queues->keys()->map(fn ($queue) => Str::before($queue, ':'))->unique()->count() > 1,
         ]);
     }
