@@ -34,8 +34,7 @@ class QueueSizeTest extends TestCase
         $data = $controller->render()->getData();
         $queues = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
-        $this->assertCount(5, $data);
-        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
+        $this->assertCount(4, $data);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertTrue($data['showConnection']);
@@ -67,11 +66,10 @@ class QueueSizeTest extends TestCase
         $data = $controller->render()->getData();
         $queue = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
-        $this->assertCount(5, $data);
+        $this->assertCount(4, $data);
         $this->assertIsFloat($data['time']);
         $this->assertIsString($data['runAt']);
         $this->assertFalse($data['showConnection']);
-        $this->assertSame(config($this->config . ".sample_rate"), $data['sampleRate']);
         $this->assertCount(1, $data['queues']);
         $this->assertEquals($r1[0], $data['queues']->keys()->first());
         $this->assertCount(1, $queue);
