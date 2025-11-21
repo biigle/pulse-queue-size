@@ -26,7 +26,6 @@ Note: This Laravel package is auto-discovered.
 ```
 Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
             'enabled' => env('PULSE_QUEUE_SIZE_ENABLED', true),
-            'sample_rate' => env('PULSE_QUEUES_SAMPLE_RATE', 1),
             'record_interval' => 60, // time interval between records
             'queues' => ['default'] // queues to monitor
             ],
