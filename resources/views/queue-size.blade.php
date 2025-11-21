@@ -30,7 +30,7 @@
             <div class="grid gap-3 mx-px mb-px">
                 @foreach ($queues as $queue => $readings)
                     @php
-                        list($connection, $queueID) = explode(':', $queue);
+                        $queueID = Str::after($queue, ":");
                         $max = $readings->flatten()->max();
                     @endphp
                     <div wire:key="{{ $queue }}">
