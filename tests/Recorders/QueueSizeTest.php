@@ -32,7 +32,7 @@ class QueueSizeTest extends TestCase
         $recorder = new QueueSize;
 
         $mock = Mockery::mock(Entry::class);
-        $mock->shouldReceive('avg')->times(3);
+        $mock->shouldReceive('sum')->times(3);
 
         Pulse::shouldReceive('record')
             ->with('pending', $queue, 1, $eventTime)

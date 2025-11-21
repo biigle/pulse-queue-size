@@ -93,7 +93,7 @@ class QueueSizeTest extends TestCase
                 'key' => $queue,
                 'value' => $value,
                 'bucket' => $currentBucket,
-                'aggregate' => 'avg',
+                'aggregate' => 'sum',
                 'period' => $secondsPerPeriod
             ]);
         }
