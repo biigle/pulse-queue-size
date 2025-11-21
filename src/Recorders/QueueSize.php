@@ -43,7 +43,7 @@ class QueueSize
                 $output = json_decode(Artisan::output(), true)[0];
 
                 foreach ($states as $state) {
-                    Pulse::record($state, $queue, $output[$state], $event->time)->avg();
+                    Pulse::record($state, $queue, $output[$state], $event->time)->sum();
                 }
             }
         }

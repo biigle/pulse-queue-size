@@ -14,7 +14,7 @@ class QueueSize extends Card
         $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
         [$queues, $time, $runAt] = $this->remember(
             fn() =>
-            $this->graph(['pending', 'delayed', 'reserved'], 'avg')
+            $this->graph(['pending', 'delayed', 'reserved'], 'sum')
         );
 
         if (!sizeof($queues)) {
