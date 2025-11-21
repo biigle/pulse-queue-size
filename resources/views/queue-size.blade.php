@@ -5,23 +5,23 @@
         details="past {{ $this->periodForHumans() }}">
         <x-slot:icon>
             <x-pulse::icons.queue-list />
-        </x-slot:icon>        
+        </x-slot:icon>
     </x-pulse::card-header>
 
-            <div class="flex flex-wrap gap-4 mb-3">
-                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    <div class="h-0.5 w-3 rounded-full bg-[#9333ea]"></div>
-                    Pending
-                </div>
-                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    <div class="h-0.5 w-3 rounded-full bg-[#e11d48]"></div>
-                    Delayed
-                </div>
-                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    <div class="h-0.5 w-3 rounded-full bg-[#eab308]"></div>
-                    Reserved
-                </div>
-            </div>
+    <div class="flex flex-wrap gap-4 mb-3">
+        <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+            <div class="h-0.5 w-3 rounded-full bg-[#9333ea]"></div>
+            Pending
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+            <div class="h-0.5 w-3 rounded-full bg-[#e11d48]"></div>
+            Delayed
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+            <div class="h-0.5 w-3 rounded-full bg-[#eab308]"></div>
+            Reserved
+        </div>
+    </div>
 
     <x-pulse::scroll :expand="$expand" wire:poll.5s="">
         @if ($queues->isEmpty())
@@ -47,12 +47,12 @@
                         <div class="mt-3 relative">
                             <div
                                 class="absolute -left-px -top-2 max-w-fit h-4 flex items-center px-1 text-xs leading-none text-white font-bold bg-purple-500 rounded after:[--triangle-size:4px] after:border-l-purple-500 after:absolute after:right-[calc(-1*var(--triangle-size))] after:top-[calc(50%-var(--triangle-size))] after:border-t-[length:var(--triangle-size)] after:border-b-[length:var(--triangle-size)] after:border-l-[length:var(--triangle-size)] after:border-transparent">
-                                    {{ number_format($max) }}
-                                </div>
+                                {{ number_format($max) }}
+                            </div>
                             <div wire:ignore class="h-14" x-data="queueSizeChart({
-                                                queue: '{{ $queue }}',
-                                                readings: @js($readings),
-                                            })">
+                                                        queue: '{{ $queue }}',
+                                                        readings: @js($readings),
+                                                    })">
                                 <canvas x-ref="canvas-{{ $queue }}"
                                     class="ring-1 ring-gray-900/5 dark:ring-gray-100/10 bg-gray-50 dark:bg-gray-800 rounded-md shadow-sm"></canvas>
                             </div>
@@ -135,7 +135,7 @@
                                 intersect: false,
                                 callbacks: {
                                     beforeBody: (context) => context
-                                    .map(item => `${item.dataset.label}: ${item.formattedValue}`)
+                                        .map(item => `${item.dataset.label}: ${item.formattedValue}`)
                                         .join(', '),
                                     label: () => null,
                                 },
