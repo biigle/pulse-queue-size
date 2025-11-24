@@ -3,8 +3,6 @@
 namespace Biigle\PulseQueueSizeCard\Tests\Http\Livewire;
 
 use Carbon\Carbon;
-use Carbon\CarbonInterval;
-use Laravel\Pulse\Facades\Pulse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -97,7 +95,7 @@ class QueueSizeTest extends TestCase
                 'key' => $queue,
                 'value' => $value,
                 'bucket' => $currentBucket,
-                'aggregate' => 'sum',
+                'aggregate' => 'max',
                 'period' => $secondsPerPeriod
             ]);
         }
