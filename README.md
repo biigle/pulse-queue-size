@@ -23,12 +23,12 @@ Note: This Laravel package is auto-discovered.
 
 1. Add the new recorder to the recorder array in the `config/pulse.php`
 
-```
+```php
 Biigle\PulseQueueSizeCard\Recorders\QueueSize::class => [
-            'enabled' => env('PULSE_QUEUE_SIZE_ENABLED', true),
-            'record_interval' => 60, // time interval between records
-            'queues' => ['default'] // queues to monitor
-            ],
+    'enabled' => env('PULSE_QUEUE_SIZE_ENABLED', true),
+    'record_interval' => 60, // time interval between records
+    'queues' => ['default'] // queues to monitor
+    ],
 ```
 
 2. Add the pulse card to the `resources/views/vendor/pulse/dashboard.blade.php` as follows
