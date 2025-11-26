@@ -1,6 +1,6 @@
 <?php
 
-namespace Biigle\PulseQueueSizeCard\Tests;
+namespace Biigle\Tests\PulseQueueSizeCard\Recorders;
 
 use Mockery;
 use Laravel\Pulse\Entry;

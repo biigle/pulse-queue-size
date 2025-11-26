@@ -58,5 +58,5 @@ jobs:
       working-directory: ../core
 
     - name: Run tests
-      run: docker compose run --rm -u 1001 worker php -d memory_limit=1G vendor/bin/phpunit --random-order --filter 'Biigle\\PulseQueueSizeCard\\Tests'
+      run: docker compose run --rm -u 1001 worker php -d memory_limit=1G vendor/bin/phpunit --random-order --filter 'Biigle\\Tests\\PulseQueueSizeCard'
       working-directory: ../core

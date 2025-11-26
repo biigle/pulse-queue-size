@@ -1,5 +1,7 @@
 <?php
 
+namespace Biigle\Tests\PulseQueueSizeCard;
+
 use Illuminate\Foundation\Testing\TestCase;
 use Biigle\PulseQueueSizeCard\PulseQueueSizeCardServiceProvider;
 
