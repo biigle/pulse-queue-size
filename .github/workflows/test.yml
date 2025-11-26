@@ -43,9 +43,10 @@ jobs:
       run: |
         composer config repositories.module --json '{"type": "path", "url": "'${GITHUB_WORKSPACE}'", "options": {"symlink": false}}'
         composer require --no-ansi --no-interaction --no-scripts --ignore-platform-reqs ${GITHUB_REPOSITORY}:@dev
-        mkdir -p tests/php/Modules
-        ln -sf ../../../vendor/${GITHUB_REPOSITORY}/tests tests/php/PulseQueueSizeCard
+        mkdir -p tests/php
+        ln -sf ../../vendor/${GITHUB_REPOSITORY}/tests tests/php/PulseQueueSizeCard
         php artisan package:discover
+        php artisan vendor:publish --provider="Laravel\Pulse\PulseServiceProvider"
       working-directory: ../core
 
     - name: Fetch base images
