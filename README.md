@@ -14,7 +14,7 @@ composer require laravel/pulse
 Install the package by running the following command.
 
 ```
-composer require biigle/pulse-queue-size-card
+composer require biigle/pulse-queue-size
 ```
 
 <h3>Set up</h3>
