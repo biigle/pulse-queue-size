@@ -25,5 +25,8 @@
             "Biigle\\PulseQueueSizeCard\\PulseQueueSizeCardServiceProvider"
         ]
         }
+    },
+    "require": {
+        "laravel/pulse": "^1.4"
     }
 }
