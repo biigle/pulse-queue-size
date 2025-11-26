@@ -14,11 +14,13 @@ use Biigle\PulseQueueSizeCard\Recorders\QueueSize;
 
 class QueueSizeTest extends TestCase
 {
-    private $config = 'pulse.recorders.' . QueueSize::class;
-
     public function testRecorder()
     {
-        config([$this->config . ".queues" => ['default']]);
+        config(['pulse.recorders.' . QueueSize::class  => [
+            'enabled' => true,
+            'record_interval' => 60,
+            'queues' => ['default'],
+        ]]);
         $defaultConnection = config('queue.default');
         $queue = "$defaultConnection:default";
         $recorder = new QueueSize;
