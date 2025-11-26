@@ -1,5 +1,5 @@
 {
-    "name": "biigle/pulse-queue-size-card",
+    "name": "biigle/pulse-queue-size",
     "description": "A Laravel pulse queue size card",
     "keywords": ["biigle", "laravel-pulse"],
     "license": "GPL-3.0-only",

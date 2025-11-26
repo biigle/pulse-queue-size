@@ -1,6 +1,6 @@
 <?php
 
-namespace Biigle\PulseQueueSizeCard\Tests\Http\Livewire;
+namespace Biigle\Tests\PulseQueueSizeCard\Http\Livewire;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
