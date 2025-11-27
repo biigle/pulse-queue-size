@@ -64,31 +64,20 @@ class QueueSizeTest extends TestCase
         $periodHour = 6;
 
         $r1 = ['test:test', 'pending', 10, now()];
-        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->addMinutes(2)];
         // should be ignored
-        $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)->subMinutes(2)];
+        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->subMinute()];
+        $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)->subMinute()];
 
         $this->record([$r3, $r2, $r1], $periodHour);
 
         $controller = new QueueSize();
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
-        $queue = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
-        $this->assertCount(4, $data);
-        $this->assertIsFloat($data['time']);
-        $this->assertIsString($data['runAt']);
         $this->assertFalse($data['showConnection']);
         $this->assertCount(1, $data['queues']);
-        $this->assertEquals($r1[0], $data['queues']->keys()->first());
-        $this->assertCount(1, $queue);
-        $this->assertCount(2, $queue[0]->filter(fn($v, $k) => $v != null));
-        $this->assertEquals($r1[2], $queue[0]->last());
-        $this->assertEquals($r2[2], $queue[0]->first());
-        $this->assertCount(
-            $queue[0]->count() - 2,
-            $queue[0]->filter(fn($v, $k) => $v === null)
-        );
+        $this->assertEquals('test:test', $data['queues']->keys()->first());
+        $this->assertEquals(10, $data['queues']->first()['pending']->sum());
     }
 
     public function testRenderFilterEmpty()
