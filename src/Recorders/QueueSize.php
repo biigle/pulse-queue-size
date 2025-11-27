@@ -20,25 +20,28 @@ class QueueSize
     ];
 
     /**
+     * Get the queues (with connections) that should be recoeded.
+     */
+    public static function getQueuesToRecord(): array
+    {
+        $queues = config("pulse.recorders.".static::class.".queues");
+        $defaultConnection = config('queue.default');
+
+        return array_map(fn ($q) =>  str_contains($q, ":") ? $q : "$defaultConnection:$q", $queues);
+    }
+
+    /**
      * Record the job.
      */
     public function record(IsolatedBeat $event): void
     {
-        // Default: 60 seconds
-        $config = "pulse.recorders." . $this::class;
-        $interval = config("$config.record_interval");
+        $interval = config("pulse.recorders.".static::class.".record_interval");
 
-        // Record the queue sizes
         if ($event->time->second % $interval === 0) {
             $states = ['pending', 'delayed', 'reserved'];
-            $queues = config("$config.queues");
-            $defaultConnection = config('queue.default');
+            $queues = static::getQueuesToRecord();
 
             foreach ($queues as $queue) {
-                if (!str_contains($queue, ":")) {
-                    $queue = "$defaultConnection:$queue";
-                }
-
                 Artisan::call("queue:monitor $queue --json");
                 $output = json_decode(Artisan::output(), true)[0];
 

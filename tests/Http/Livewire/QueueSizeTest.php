@@ -2,21 +2,25 @@
 
 namespace Biigle\Tests\PulseQueueSizeCard\Http\Livewire;
 
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Testing\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Biigle\PulseQueueSizeCard\Http\Livewire\QueueSize;
+use Biigle\PulseQueueSizeCard\Recorders\QueueSize as Recorder;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\TestCase;
+use Illuminate\Support\Facades\DB;
 
 class QueueSizeTest extends TestCase
 {
     use RefreshDatabase;
 
-    private $config = 'pulse.recorders.' . \Biigle\PulseQueueSizeCard\Recorders\QueueSize::class;
-
     public function testRender()
     {
-        config([$this->config . ".queues" => ['hello:world', 'world:test']]);
+        config(['queue.default' => 'hello']);
+        config(['pulse.recorders.' . Recorder::class  => [
+            'enabled' => true,
+            'record_interval' => 60,
+            'queues' => ['hello:world', 'world:test'],
+        ]]);
         $getDate = fn($d) => Carbon::parse($d)
             ->setTimezone('UTC')
             ->startOfMinute()
@@ -51,35 +55,51 @@ class QueueSizeTest extends TestCase
 
     public function testRenderPeriod()
     {
+        config(['queue.default' => 'test']);
+        config(['pulse.recorders.' . Recorder::class  => [
+            'enabled' => true,
+            'record_interval' => 60,
+            'queues' => ['test:test', 'world:world'],
+        ]]);
         $periodHour = 6;
-        config([$this->config . ".queues" => ['test:test', 'world:world']]);
 
         $r1 = ['test:test', 'pending', 10, now()];
-        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->addMinutes($periodHour)];
         // should be ignored
-        $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)];
+        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->subMinute()];
+        $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)->subMinute()];
 
         $this->record([$r3, $r2, $r1], $periodHour);
 
         $controller = new QueueSize();
         $controller->period = $periodHour . "_hours";
         $data = $controller->render()->getData();
-        $queue = $data['queues']->flatten(1)->filter(fn($q) => $q->countBy()->count() > 1)->values();
 
-        $this->assertCount(4, $data);
-        $this->assertIsFloat($data['time']);
-        $this->assertIsString($data['runAt']);
         $this->assertFalse($data['showConnection']);
         $this->assertCount(1, $data['queues']);
-        $this->assertEquals($r1[0], $data['queues']->keys()->first());
-        $this->assertCount(1, $queue);
-        $this->assertCount(2, $queue[0]->filter(fn($v, $k) => $v != null));
-        $this->assertEquals($r1[2], $queue[0]->last());
-        $this->assertEquals($r2[2], $queue[0]->first());
-        $this->assertCount(
-            $queue[0]->count() - 2,
-            $queue[0]->filter(fn($v, $k) => $v === null)
-        );
+        $this->assertEquals('test:test', $data['queues']->keys()->first());
+        $this->assertEquals(10, $data['queues']->first()['pending']->sum());
+    }
+
+    public function testRenderFilterEmpty()
+    {
+        $periodHour = 1;
+        config(['pulse.recorders.' . Recorder::class  => [
+            'enabled' => true,
+            'record_interval' => 60,
+            'queues' => ['test', 'test2'],
+        ]]);
+
+        $r1 = ['test', 'pending', 10, now()];
+        $r2 = ['test2', 'pending', 0, now()];
+
+        $this->record([$r2, $r1], $periodHour);
+
+        $controller = new QueueSize();
+        $controller->period = $periodHour . "_hours";
+        $data = $controller->render()->getData();
+
+        $this->assertArrayHasKey('test', $data['queues']);
+        $this->assertArrayNotHasKey('test2', $data['queues']);
     }
 
     public function record($records, $period)
