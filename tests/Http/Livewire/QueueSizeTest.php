@@ -16,6 +16,7 @@ class QueueSizeTest extends TestCase
 
     public function testRender()
     {
+        config(['queue.default' => 'hello']);
         config([$this->config . ".queues" => ['hello:world', 'world:test']]);
         $getDate = fn($d) => Carbon::parse($d)
             ->setTimezone('UTC')
@@ -51,11 +52,12 @@ class QueueSizeTest extends TestCase
 
     public function testRenderPeriod()
     {
+        config(['queue.default' => 'test']);
         $periodHour = 6;
         config([$this->config . ".queues" => ['test:test', 'world:world']]);
 
         $r1 = ['test:test', 'pending', 10, now()];
-        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->addMinutes($periodHour)];
+        $r2 = ['test:test', 'pending', 9, now()->subHours($periodHour)->addMinutes(5)];
         // should be ignored
         $r3 = ['hello:world', 'pending', 8, now()->subHours($periodHour)];
 
@@ -80,6 +82,24 @@ class QueueSizeTest extends TestCase
             $queue[0]->count() - 2,
             $queue[0]->filter(fn($v, $k) => $v === null)
         );
+    }
+
+    public function testRenderFilterEmpty()
+    {
+        $periodHour = 1;
+        config([$this->config . ".queues" => ['test', 'test2']]);
+
+        $r1 = ['test', 'pending', 10, now()];
+        $r2 = ['test2', 'pending', 0, now()];
+
+        $this->record([$r2, $r1], $periodHour);
+
+        $controller = new QueueSize();
+        $controller->period = $periodHour . "_hours";
+        $data = $controller->render()->getData();
+
+        $this->assertArrayHasKey('test', $data['queues']);
+        $this->assertArrayNotHasKey('test2', $data['queues']);
     }
 
     public function record($records, $period)
