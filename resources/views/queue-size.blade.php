@@ -1,5 +1,5 @@
 @use('Illuminate\Support\Str')
-<x-pulse::card title="Queue Size" :cols="$cols">
+<x-pulse::card title="Queue Size" :cols="$cols" :rows="$rows">
     <x-pulse::card-header name="Queue Sizes"
         x-bind:title="`Time: {{ number_format($time) }}ms; Run at: ${formatDate('{{ $runAt }}')};`"
         details="past {{ $this->periodForHumans() }}">
