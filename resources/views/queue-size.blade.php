@@ -20,6 +20,10 @@
                     <div class="h-0.5 w-3 rounded-full bg-[#9333ea]"></div>
                     Reserved
                 </div>
+                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                    <div class="h-3 w-1 bg-[#e11d48]"></div>
+                    Failed
+                </div>
             </div>
         </x-slot:actions>
     </x-pulse::card-header>
@@ -33,7 +37,7 @@
                 @foreach ($queues as $queue => $readings)
                     @php
                         $queueID = Str::after($queue, ":");
-                        $max = $readings->flatten()->max();
+                        $max = $readings->except('failed')->flatten()->max();
                     @endphp
                     <div wire:key="{{ $queue }}">
                         <div class="flex items-center gap-2">
@@ -92,6 +96,12 @@
                                 label: 'Reserved',
                                 borderColor: '#9333ea',
                                 data: Object.values(config.readings.reserved),
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Failed',
+                                backgroundColor: '#e11d48',
+                                data: Object.values(config.readings.failed),
                             },
                         ]
                     },
@@ -156,10 +166,11 @@
                 }
 
                 chart.data.labels = this.labels(queues[queue])
-                chart.options.scales.y.max = this.highest(queues)
+                chart.options.scales.y.max = this.highest(queues[queue])
                 chart.data.datasets[0].data = Object.values(queues[queue].pending);
                 chart.data.datasets[1].data = Object.values(queues[queue].delayed);
                 chart.data.datasets[2].data = Object.values(queues[queue].reserved);
+                chart.data.datasets[3].data = Object.values(queues[queue].failed);
 
                 chart.update();
             })
