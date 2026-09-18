@@ -5,6 +5,7 @@ namespace Biigle\PulseQueueSizeCard\Http\Livewire;
 use Biigle\PulseQueueSizeCard\Recorders\QueueSize as Recorder;
 use Illuminate\Support\Str;
 use Laravel\Pulse\Livewire\Card;
+use Livewire\Attributes\Lazy;
 use Livewire\Livewire;
 
 #[Lazy]
