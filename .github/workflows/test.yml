@@ -21,7 +21,7 @@ jobs:
         repository: biigle/core
         ref: master
         fetch-depth: 1
-        path: core
+        path: ../core
 
     - uses: shivammathur/setup-php@v2
       with:
