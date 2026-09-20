@@ -9,7 +9,7 @@
         <x-slot:actions>
             <div class="flex flex-wrap gap-4">
                 <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    <div class="h-0.5 w-3 rounded-full bg-[#e11d48]"></div>
+                    <div class="h-0.5 w-3 rounded-full bg-[#6b728080]"></div>
                     Pending
                 </div>
                 <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium">
@@ -84,7 +84,7 @@
                         datasets: [
                             {
                                 label: 'Pending',
-                                borderColor: '#e11d48',
+                                borderColor: '#6b728080',
                                 data: Object.values(config.readings.pending),
                             },
                             {
@@ -100,6 +100,7 @@
                             {
                                 type: 'bar',
                                 label: 'Failed',
+                                yAxisID: 'failed',
                                 backgroundColor: '#e11d48',
                                 data: Object.values(config.readings.failed),
                             },
@@ -136,6 +137,12 @@
                                 min: 0,
                                 max: this.highest(config.readings),
                             },
+                            failed: {
+                                display: false,
+                                axis: 'y',
+                                min: 0,
+                                max: this.highestFailures(config.readings),
+                            },
                         },
                         plugins: {
                             legend: {
@@ -167,6 +174,7 @@
 
                 chart.data.labels = this.labels(queues[queue])
                 chart.options.scales.y.max = this.highest(queues[queue])
+                chart.options.scales.failed.max = this.highestFailures(queues[queue])
                 chart.data.datasets[0].data = Object.values(queues[queue].pending);
                 chart.data.datasets[1].data = Object.values(queues[queue].delayed);
                 chart.data.datasets[2].data = Object.values(queues[queue].reserved);
@@ -176,7 +184,10 @@
             })
         },
         highest(readings) {
-            return Math.max(...Object.values(readings).map(dataset => Math.max(...Object.values(dataset))))
+            return Math.max(...['pending', 'delayed', 'reserved'].map(status => Math.max(...Object.values(readings[status]))))
+        },
+        highestFailures(readings) {
+            return Math.max(1, ...Object.values(readings.failed))
         },
         labels(readings) {
             return Object.keys(Object.values(readings)[0]).map(formatDate)

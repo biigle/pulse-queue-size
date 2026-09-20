@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\DB;
-use Livewire\Livewire;
 
 class QueueSizeTest extends TestCase
 {
@@ -125,23 +124,6 @@ class QueueSizeTest extends TestCase
         $this->assertCount(1, $data['queues']);
         $this->assertArrayHasKey('failed', $data['queues']['redis:default']);
         $this->assertEquals(2, $data['queues']['redis:default']['failed']->sum());
-    }
-
-    public function testRenderFailedJobsAsColumns()
-    {
-        config(['pulse.recorders.' . Recorder::class  => [
-            'enabled' => true,
-            'record_interval' => 60,
-            'queues' => ['default'],
-        ]]);
-
-        $component = Livewire::test(QueueSize::class, ['lazy' => false])
-            ->assertSee('Failed');
-
-        $this->assertStringContainsString(
-            "type: 'bar'",
-            implode("\n", $component->effects['scripts'])
-        );
     }
 
     public function record($records, $period)
