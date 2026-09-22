@@ -42,7 +42,7 @@ class QueueSizeTest extends TestCase
         $this->assertTrue($data['showConnection']);
         $this->assertCount(2, $data['queues']);
         $this->assertEquals([$r1[0], $r3[0]], $data['queues']->keys()->toArray());
-        $this->assertCount(6, $data['queues']->flatten(1));
+        $this->assertCount(8, $data['queues']->flatten(1));
         foreach ($queues as $idx => $queue) {
             $this->assertCount(1, $queue->filter(fn($v, $k) => $v != null));
             $this->assertEquals($records[$idx][2], $queue[$getDate($records[$idx][3])]);
@@ -102,10 +102,34 @@ class QueueSizeTest extends TestCase
         $this->assertArrayNotHasKey('test2', $data['queues']);
     }
 
+    public function testRenderFailedJobs()
+    {
+        config(['queue.default' => 'redis']);
+        config(['pulse.recorders.' . Recorder::class  => [
+            'enabled' => true,
+            'record_interval' => 60,
+            'queues' => ['default'],
+        ]]);
+
+        $timestamp = now();
+        $this->record([
+            ['redis:default', 'pending', 0, $timestamp],
+            ['redis:default', 'delayed', 0, $timestamp],
+            ['redis:default', 'reserved', 0, $timestamp],
+            ['redis:default', 'failed', 2, $timestamp, 'count'],
+        ], 1);
+
+        $data = (new QueueSize())->render()->getData();
+
+        $this->assertCount(1, $data['queues']);
+        $this->assertArrayHasKey('failed', $data['queues']['redis:default']);
+        $this->assertEquals(2, $data['queues']['redis:default']['failed']->sum());
+    }
+
     public function record($records, $period)
     {
         foreach ($records as $record) {
-            list($queue, $status, $value, $timestamp) = $record;
+            [$queue, $status, $value, $timestamp] = $record;
             $maxDataPoints = 60;
             $secondsPerPeriod = (float) ($period * 60 * 60 / $maxDataPoints);
             $currentBucket = (int) (floor($timestamp->getTimestamp() / $secondsPerPeriod) * $secondsPerPeriod);
@@ -115,7 +139,7 @@ class QueueSizeTest extends TestCase
                 'key' => $queue,
                 'value' => $value,
                 'bucket' => $currentBucket,
-                'aggregate' => 'max',
+                'aggregate' => $record[4] ?? 'max',
                 'period' => $secondsPerPeriod
             ]);
         }
