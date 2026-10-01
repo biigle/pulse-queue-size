@@ -13,21 +13,30 @@ class QueueSize extends Card
 {
     public function render()
     {
-        [$queues, $time, $runAt] = $this->remember(
-            fn() => $this->graph(['pending', 'delayed', 'reserved'], 'max')
+        [[$queues, $failedJobs], $time, $runAt] = $this->remember(
+            fn() => [
+                $this->graph(['pending', 'delayed', 'reserved'], 'max'),
+                $this->graph(['failed'], 'count'),
+            ]
         );
+
+        $queues->each(function ($readings, $queue) use ($failedJobs) {
+            $failed = $failedJobs->get($queue)?->get('failed');
+            $readings->put('failed', $failed ?? $readings->first()->map(fn () => null));
+        });
 
         // Show queues in the same order than they are defined in the config.
         $sortIndex = array_flip(Recorder::getQueuesToRecord());
         $queues = $queues->sortKeysUsing(
-            fn ($a, $b) => ($sortIndex[$a] ?? INF) - ($sortIndex[$b] ?? INF)
+            fn ($a, $b) => ($sortIndex[$a] ?? PHP_INT_MAX) <=> ($sortIndex[$b] ?? PHP_INT_MAX)
         );
 
         // Show only queues with values.
         $queues = $queues->filter(function ($q) {
             return $q['pending']->contains(fn ($v) => floatval($v) !== 0.0) ||
                 $q['delayed']->contains(fn ($v) => floatval($v) !== 0.0) ||
-                $q['reserved']->contains(fn ($v) => floatval($v) !== 0.0);
+                $q['reserved']->contains(fn ($v) => floatval($v) !== 0.0) ||
+                $q['failed']->contains(fn ($v) => floatval($v) !== 0.0);
         });
 
         if (Livewire::isLivewireRequest()) {

@@ -21,6 +21,10 @@ composer require biigle/pulse-queue-size
 
 Note: This Laravel package is auto-discovered.
 
+The failed-job columns require Laravel Pulse's built-in
+`Laravel\Pulse\Recorders\Queues` recorder to be enabled in `config/pulse.php`.
+The custom recorder below records queue sizes, but does not record job failures.
+
 1. Add the new recorder to the recorder array in the `config/pulse.php`
 
 ```php
